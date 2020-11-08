@@ -24,24 +24,28 @@ class Commands(
   implicit timer: Timer[IO],
   cs: ContextShift[IO],
 ) {
+
   val onMessageReceived: Map[Regex, (Regex, MessageEvent) => IO[Boolean]] = Map(
     "^toggle recursive commands$".r -> toggleRecursiveCommands,
     "^stop replacing (.+)$".r -> removeReplacement,
     "^mute all$".r -> muteAll,
     "^followmute$".r -> followMute,
+    "^take over$".r -> takeOver,
     "^replace (.+),, (.+)$".r -> addReplacement,
     "^clear all replacements$".r -> clearReplacements,
     "^.+\\?$".r -> sentient,
     "^-play .+$".r -> sentient2,
     "^send file (.+)$".r -> sendFile,
     "^get (.+)$".r -> get,
+    "^mute <@!(\\d+)>$".r -> mute,
     ".*".r -> aioque,
     ".*".r -> replace,
   )
 
-  val onGuildMessageReceived: Map[Regex, (Regex, MessageEvent) => IO[Boolean]] = Map(
-    "([Ss])pam <@!(\\d+)>".r -> addToSpam,
-  )
+  val onGuildMessageReceived: Map[Regex, (Regex, MessageEvent) => IO[Boolean]] =
+    Map(
+      "([Ss])pam <@!(\\d+)>".r -> addToSpam,
+    )
 
   val onPrivateMessageReceived: Map[Regex, (Regex, MessageEvent) => IO[Boolean]] = Map(
     ".*".r -> removeFromSpam,
@@ -59,7 +63,7 @@ class Commands(
       spamList <- Stream.repeatEval(spamList.get).metered(400.millis)
       id <- Stream.emits(spamList.toList)
       user <- Stream.eval(jda.getUser(id))
-      _ <- Stream.eval(user.openPrivateChannel{ channel =>
+      _ <- Stream.eval(user.openPrivateChannel { channel =>
         channel.sendMessage("Spam").queue()
       })
     } yield ()
@@ -69,13 +73,13 @@ class Commands(
       muteLeaderTuple <- Stream.repeatEval(muteLeader.get).metered(500.millis)
       (leaderID, lastState) <- Stream.emits(muteLeaderTuple.toList)
       leader <- Stream.eval(jda.getUser(leaderID))
-      voiceChannel = leader.findVoiceChannel
+      voiceChannel = leader.voiceChannel
       isSelfMuted <- Stream.emits(leader.isSelfMuted.toList)
       _ <- Stream.eval {
         if (isSelfMuted != lastState) {
           for {
             _ <- muteLeader.set(Some(leaderID, isSelfMuted))
-            _ <- voiceChannel.traverse_(_.muteAll)
+            _ <- voiceChannel.traverse_(_.toggleMuteAll)
           } yield ()
         } else {
           IO.unit
@@ -89,20 +93,23 @@ class Commands(
 
   private def applyReplacements(string: String, replacements: Map[String, String]) =
     replacements.toList.foldLeft(string) {
-      case (string, (regex, replacement)) => string.replaceAll(regex, replacement)
+      case (string, (regex, replacement)) =>
+        string.replaceAll(regex, replacement)
     }
 
-  def followMute(regex: Regex, event: MessageEvent): IO[Boolean] = {
+  def followMute(regex: Regex, event: MessageEvent): IO[Boolean] =
     for {
       leader <- muteLeader.get
       update <- leader match {
         case Some((id, _)) if id == event.author.id =>
-          event.sendMessage(s"Stopped following ${event.author.name}.")
-            .as(None)
-        case None                                   =>
-          event.sendMessage(s"Now following ${event.author.name}")
+          event.jda.clearActivity
+          event.sendMessage(s"Stopped following ${event.author.name}.").as(None)
+        case None =>
+          event.jda.setWatching(event.author.name)
+          event
+            .sendMessage(s"Now following ${event.author.name}")
             .as(event.author.isSelfMuted.map(event.author.id -> _))
-        case some@Some((id, _))                     =>
+        case some @ Some((id, _)) =>
           for {
             following <- event.jda.getUser(id)
             _ <- event.sendMessage(s"Already following ${following.name}.")
@@ -111,16 +118,29 @@ class Commands(
       _ <- muteLeader.set(update)
       recursive <- recursiveCommands.get
     } yield !recursive
-  }
 
-  def toggleRecursiveCommands(regex: Regex, event: MessageEvent): IO[Boolean] = {
+  def takeOver(regex: Regex, event: MessageEvent): IO[Boolean] =
+    for {
+      leader <- muteLeader.get
+      update <- leader match {
+        case Some((id, _)) if id != event.author.id =>
+          event.jda.setWatching(event.author.name)
+          event
+            .sendMessage(s"${event.author.name} taken over mute following.")
+            .as(event.author.isSelfMuted.map(event.author.id -> _))
+        case o => IO.pure(o)
+      }
+      _ <- muteLeader.set(update)
+      recursive <- recursiveCommands.get
+    } yield !recursive
+
+  def toggleRecursiveCommands(regex: Regex, event: MessageEvent): IO[Boolean] =
     for {
       recursive <- recursiveCommands.get
       message = if (!recursive) "To understand recursion you must understand recursion" else "Do you understand it now?"
       _ <- event.sendMessage(message)
       _ <- recursiveCommands.set(!recursive)
     } yield true
-  }
 
   def removeReplacement(regex: Regex, event: MessageEvent): IO[Boolean] =
     event.content match {
@@ -130,17 +150,15 @@ class Commands(
           _ <- saveReplacements
           recursive <- recursiveCommands.get
         } yield !recursive
-      case _                  => IO.pure(false)
+      case _ => IO.pure(false)
     }
 
   def muteAll(regex: Regex, event: MessageEvent): IO[Boolean] = {
     println("Muting all users")
-    event.author.findVoiceChannel.traverse_ { channel =>
-      channel.muteAll
-    }.as(true)
+    event.author.voiceChannel.traverse_(_.toggleMuteAll).as(true)
   }
 
-  def addReplacement(regex: Regex, event: MessageEvent): IO[Boolean] = {
+  def addReplacement(regex: Regex, event: MessageEvent): IO[Boolean] =
     event.content match {
       case regex(regex, replacement) =>
         for {
@@ -148,10 +166,8 @@ class Commands(
           _ <- saveReplacements
           recursive <- recursiveCommands.get
         } yield !recursive
-      case _                         => IO.pure(false)
+      case _ => IO.pure(false)
     }
-  }
-
 
   def clearReplacements(regex: Regex, event: MessageEvent): IO[Boolean] =
     for {
@@ -172,7 +188,7 @@ class Commands(
           _ <- event.sendFile(new File(file))
           recursive <- recursiveCommands.get
         } yield !recursive
-      case _             => IO.pure(false)
+      case _ => IO.pure(false)
     }
 
   def get(regex: Regex, event: MessageEvent): IO[Boolean] =
@@ -184,7 +200,7 @@ class Commands(
           _ <- event.sendFile(file)
           recursive <- recursiveCommands.get
         } yield !recursive
-      case _            => IO.pure(false)
+      case _ => IO.pure(false)
     }
 
   /*def callCersibon(regex: Regex, event: MessageEvent): IO[Boolean] =
@@ -249,9 +265,10 @@ class Commands(
           user <- event.jda.getUser(id.toLong)
           _ = println(s"Spamming ${user.name}")
           recursive <- recursiveCommands.get
-          stop <- if (!user.isBot) spamList.update(_ + user.id).as(!recursive) else IO.pure(false)
+          stop <- if (!user.isBot) spamList.update(_ + user.id).as(!recursive)
+          else IO.pure(false)
         } yield stop
-      case _             => IO.pure(false)
+      case _ => IO.pure(false)
     }
 
   def removeFromSpam(regex: Regex, event: MessageEvent): IO[Boolean] =
@@ -266,4 +283,18 @@ class Commands(
         IO.pure(false)
       }
     } yield stop
+
+  def mute(regex: Regex, event: MessageEvent): IO[Boolean] =
+    event.content match {
+      case regex(id) =>
+        for {
+          user <- event.jda.getUser(id.toLong)
+          _ = println(s"Muting ${user.name}")
+          recursive <- recursiveCommands.get
+          stop <- if (!user.isBot)
+            user.member.traverse_(_.toggleMute).as(!recursive)
+          else IO.pure(false)
+        } yield stop
+      case _ => IO.pure(false)
+    }
 }
