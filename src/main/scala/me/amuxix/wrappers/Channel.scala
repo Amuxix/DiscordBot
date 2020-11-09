@@ -7,6 +7,10 @@ import net.dv8tion.jda.api.entities.MessageChannel
 import me.amuxix.Implicits._
 
 class Channel(channel: MessageChannel) {
+  lazy val id: Long = channel.getIdLong
+  lazy val name: String = channel.getName
   def sendMessage(string: String): IO[Unit] = channel.sendMessage(string).run
   def sendFile(file: File): IO[Unit] = channel.sendFile(file).run
+
+  override def toString: String = s"#$name($id)"
 }

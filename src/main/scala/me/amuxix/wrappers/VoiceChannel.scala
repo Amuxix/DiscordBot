@@ -10,4 +10,6 @@ class VoiceChannel(channel: JDAVoiceChannel) {
   def members: List[Member] = channel.getMembers.asScala.toList.map(new Member(_))
 
   def toggleMuteAll: IO[Unit] = members.traverse_(_.toggleMute)
+  def muteAll: IO[Unit] = members.traverse_(_.mute)
+  def unmuteAll: IO[Unit] = members.traverse_(_.unmute)
 }
