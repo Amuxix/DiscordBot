@@ -17,13 +17,14 @@ object EnableCommand extends Command {
           command = Bot.allCommands
             .find(_.className.equalsIgnoreCase(commandName))
             .filterNot(enabledCommands.toList.contains)
-          _ <- command.fold(IO.unit) { command =>
+          noCommand = event.sendMessage(s"No command named `$commandName` found!").run
+          _ <- command.fold(noCommand) { command =>
             for {
               _ <- Bot.enabledCommands.update { enabledCommandsMap =>
                 val enabledCommands = enabledCommandsMap.getOrElse(event.channel.id, Set.empty)
                 enabledCommandsMap + (event.channel.id -> (enabledCommands + command))
               }
-              _ <- event.sendMessage(s"Enabled `${command.className}` command.")
+              _ <- event.sendMessage(s"Enabled `${command.className}` command.").run
               _ <- Persistence.saveEnabledCommands
             } yield ()
           }

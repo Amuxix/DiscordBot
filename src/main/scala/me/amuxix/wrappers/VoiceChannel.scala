@@ -1,15 +1,14 @@
 package me.amuxix.wrappers
 
-import cats.effect.IO
 import net.dv8tion.jda.api.entities.{VoiceChannel => JDAVoiceChannel}
+
 import scala.jdk.CollectionConverters._
-import cats.instances.list._
-import cats.syntax.foldable._
+import me.amuxix.Action
 
 class VoiceChannel(channel: JDAVoiceChannel) {
   def members: List[Member] = channel.getMembers.asScala.toList.map(new Member(_))
 
-  def toggleMuteAll: IO[Unit] = members.traverse_(_.toggleMute)
-  def muteAll: IO[Unit] = members.traverse_(_.mute)
-  def unmuteAll: IO[Unit] = members.traverse_(_.unmute)
+  def toggleMuteAll: List[Action[Unit]] = members.map(_.toggleMute)
+  def muteAll: List[Action[Unit]] = members.map(_.mute)
+  def unmuteAll: List[Action[Unit]] = members.map(_.unmute)
 }

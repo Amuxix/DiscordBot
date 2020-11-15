@@ -1,11 +1,10 @@
 package me.amuxix.wrappers
 
-import cats.effect.IO
+import me.amuxix.Action
 import net.dv8tion.jda.api.entities.{Message => JDAMessage}
-import me.amuxix.Implicits._
 
 class Message(message: JDAMessage) {
   lazy val content: String = message.getContentRaw
-  def addReaction(string: String): IO[Unit] = message.addReaction(string).run
-  def edit(string: String): IO[Unit] = message.editMessage(string).run
+  def addReaction(string: String): Action[Unit] = new Action(message.addReaction(string)).as(())
+  def edit(string: String): Action[Message] = new Action(message.editMessage(string).map(new Message(_)))
 }

@@ -2,50 +2,46 @@ package me.amuxix
 
 import cats.data.NonEmptyList
 import cats.effect.IO
-import me.amuxix.commands.Command
+import me.amuxix.commands.{Command, StopSpam}
 import me.amuxix.wrappers.MessageEvent
 import me.amuxix.wrappers.MessageEvent._
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 
 object MessageListener extends ListenerAdapter { out =>
 
-  private def runCommandList(event: MessageEvent, commands: NonEmptyList[Command]): IO[Unit] =
+  private def runCommandList(event: MessageEvent, commands: NonEmptyList[Command], privateChannel: Boolean): IO[Unit] =
     if (!event.author.isBot) {
       commands
+        .sortBy(-_.regex.toString.length)
         .foldLeft(IO.pure(false)) {
           case (io, command) if command.regex.matches(event.content) =>
             for {
               stopped <- io
-              stop <- if (stopped) {
-                IO.pure(stopped)
-              } else {
-                val subgroups = command.regex.findFirstMatchIn(event.content).get.subgroups.mkString(" ")
-                if (command.regex != Command.all) println(s"${event.author} issued command $command $subgroups")
-                command.run(command.regex, event)
-              }
+              stop <-
+                if (stopped) {
+                  IO.pure(stopped)
+                } else {
+                  lazy val subgroups = command.regex.findFirstMatchIn(event.content).get.subgroups.mkString(" ")
+                  if (command.regex != Command.all) println(s"${event.author} issued command $command $subgroups".trim)
+                  command.run(command.regex, event, privateChannel)
+                }
             } yield stop
-          case (io, _) => io
+          case (io, _) =>
+            io
         }
         .as(())
     } else {
       IO.unit
     }
 
-  private def runCommands(event: MessageEvent): Unit =
+  override def onGuildMessageReceived(event: GuildMessageReceivedEvent): Unit =
     (for {
       commands <- Bot.enabledCommands(event.channel)
-      _ <- runCommandList(event, commands)
+      _ <- runCommandList(event, commands, privateChannel = false)
     } yield ()).unsafeRunSync()
 
-  override def onMessageReceived(event: MessageReceivedEvent): Unit =
-    runCommands(event)
-  //println(s"Received message ${event.getAuthor.getName} - ${event.getMessage.getContentRaw}")
-
-  //override def onGuildMessageReceived(event: GuildMessageReceivedEvent): Unit = runCommands(event)
-
   override def onPrivateMessageReceived(event: PrivateMessageReceivedEvent): Unit =
-    runCommandList(event, Bot.alwaysEnabled)
-  //println(s"Received private message ${event.getAuthor.getName} - ${event.getMessage.getContentRaw}")
+    runCommandList(event, NonEmptyList.one(StopSpam), privateChannel = true).unsafeRunSync()
 }
