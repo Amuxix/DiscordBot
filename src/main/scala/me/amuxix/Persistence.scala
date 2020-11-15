@@ -12,9 +12,10 @@ import me.amuxix.commands.Command
 import scala.jdk.CollectionConverters._
 
 object Persistence {
-  val replacementsFile = new File("replacements.txt")
-  val allowedRolesFile = new File("allowedRoles.txt")
-  val enabledCommandsFile = new File("enabledCommands.txt")
+  val fileFolder = new File("/data")
+  val replacementsFile = new File(fileFolder, "replacements.txt")
+  val allowedRolesFile = new File(fileFolder, "allowedRoles.txt")
+  val enabledCommandsFile = new File(fileFolder, "enabledCommands.txt")
 
   private def save[T](file: File, ref: Ref[IO, T])(f: T => List[String]): IO[Unit] =
     for {
@@ -44,10 +45,11 @@ object Persistence {
     case (channelID, commands) => s"$channelID, ${commands.mkString(", ")}"
   })
 
-  val loadEnabledCommands: IO[Unit] = load(enabledCommandsFile, enabledCommands)(_.map(_.split(", ").toList match {
-    case channel :: Nil => (channel.toLong, Set.empty[Command])
+  val loadEnabledCommands: IO[Unit] = load(enabledCommandsFile, enabledCommands)(_.flatMap(_.split(", ").toList match {
+    case Nil            => None
+    case channel :: Nil => Some(channel.toLong -> Set.empty[Command])
     case channel :: tail =>
       val commands = tail.flatMap(commandName => allCommands.find(_.className.equalsIgnoreCase(commandName))).toSet
-      (channel.toLong, commands)
+      Some(channel.toLong -> commands)
   }).toMap)
 }

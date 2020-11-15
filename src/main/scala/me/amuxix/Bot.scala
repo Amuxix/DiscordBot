@@ -1,15 +1,13 @@
 package me.amuxix
 
-import java.io._
-
 import cats.data.NonEmptyList
 import cats.effect.concurrent.Ref
-import cats.effect.{ExitCode, IO, IOApp, Resource}
+import cats.effect.{ExitCode, IO, IOApp}
 import cats.syntax.foldable._
 import fs2.Stream
-import me.amuxix.Implicits._
 import me.amuxix.Persistence.{loadAllowedRoles, loadEnabledCommands}
 import me.amuxix.commands._
+import me.amuxix.syntax.all._
 import me.amuxix.wrappers.{Channel, Role, User}
 import net.dv8tion.jda.api.{JDA, JDABuilder}
 
@@ -31,6 +29,8 @@ object Bot extends IOApp {
       Help,
       EnableCommand,
       DisableCommand,
+      EnableAllCommands,
+      DisableAllCommands,
       FollowMute,
       TakeOver,
       Mute,
@@ -38,8 +38,11 @@ object Bot extends IOApp {
       StopSpam,
       AllowGroup,
       CopyAllowedCommands,
+      DisallowGroup,
     )
-  val alwaysEnabled = NonEmptyList.of(Help, EnableCommand, DisableCommand, StopSpam)
+
+  val alwaysEnabled =
+    NonEmptyList.of(Help, EnableCommand, DisableCommand, EnableAllCommands, DisableAllCommands, StopSpam)
 
   val enabledCommands = Ref.unsafe[IO, Map[Long, Set[Command]]](Map.empty)
 
@@ -57,7 +60,7 @@ object Bot extends IOApp {
       id <- Stream.emits(spamList.toList)
       maybeUser <- Stream.eval(jda.getUserByID(id))
       user <- Stream.emits(maybeUser.toList)
-      privateChannel <- Stream.eval(user.privateChannel)
+      privateChannel <- user.privateChannel.streamed
       _ <- privateChannel.sendMessage("Spam").streamed
     } yield ()
 
@@ -67,18 +70,18 @@ object Bot extends IOApp {
       (leaderID, wasSelfMuted) <- Stream.emits(muteLeaderTuple.toList)
       maybeLeader <- Stream.eval(jda.getUserByID(leaderID))
       leader <- Stream.emits(maybeLeader.toList)
-      voiceChannel = leader.voiceChannel
+      voiceChannel <- Stream.emits(leader.voiceChannel.toList)
       isSelfMuted <- Stream.emits(leader.isSelfMuted.toList)
       _ <- Stream.eval {
         if (isSelfMuted && !wasSelfMuted) { //Leader muted
           for {
-            _ <- muteLeader.set(Some(leaderID, isSelfMuted))
-            _ <- voiceChannel.traverse_(_.muteAll)
+            _ <- muteLeader.set(Some((leaderID, isSelfMuted)))
+            _ <- voiceChannel.muteAll.traverse_(_.run)
           } yield ()
         } else if (!isSelfMuted && wasSelfMuted) { //Leader unmuted
           for {
-            _ <- muteLeader.set(Some(leaderID, isSelfMuted))
-            _ <- voiceChannel.traverse_(_.unmuteAll)
+            _ <- muteLeader.set(Some((leaderID, isSelfMuted)))
+            _ <- voiceChannel.unmuteAll.traverse_(_.run)
           } yield ()
         } else {
           IO.unit

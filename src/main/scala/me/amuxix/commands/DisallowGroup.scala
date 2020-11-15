@@ -8,7 +8,7 @@ import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
-object AllowGroup extends Command {
+object DisallowGroup extends Command {
   override def regex: Regex = s"^allow (?:group|role) ${Command.groupID}$$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
@@ -18,8 +18,8 @@ object AllowGroup extends Command {
           case None => IO.pure(false)
           case Some(role) =>
             for {
-              _ <- Bot.allowedRoles.update(_ + role.id)
-              _ <- event.sendMessage(s"Users of ${role.name} can now use this bot.").run
+              _ <- Bot.allowedRoles.update(_ - role.id)
+              _ <- event.sendMessage(s"Users of ${role.name} can no longer use this bot.").run
               _ <- Persistence.saveAllowedRoles
             } yield true
         }
@@ -27,5 +27,5 @@ object AllowGroup extends Command {
         IO.pure(false)
     }
 
-  override val description: String = "Allows users from the given group to use this bot."
+  override val description: String = "Removes the group from the allowed groups that can use this bot."
 }

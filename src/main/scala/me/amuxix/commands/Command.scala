@@ -10,13 +10,13 @@ abstract class Command extends Named {
   def regex: Regex
   protected def apply(regex: Regex, event: MessageEvent): IO[Boolean]
 
-  def run(regex: Regex, event: MessageEvent): IO[Boolean] =
+  def run(regex: Regex, event: MessageEvent, alwaysAllowed: Boolean): IO[Boolean] =
     for {
       roles <- Bot.allowedRoles.get
       allowed = event.authorMember.fold(false) { member =>
         member.isGuildOwner || (roles & member.roles.map(_.id)).nonEmpty || member.id == 211184778815340544L
       }
-      stop <- if (allowed) apply(regex, event) else IO.pure(false)
+      stop <- if (allowed || alwaysAllowed) apply(regex, event) else IO.pure(false)
     } yield stop
 
   val description: String
@@ -26,4 +26,6 @@ abstract class Command extends Named {
 
 object Command {
   val all = ".+".r
+  val userID = "(?:<@!)?(\\d+)(?:>)?".r
+  val groupID = "(?:<@&)?(\\d+)(?:>)?".r
 }

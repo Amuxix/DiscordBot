@@ -4,16 +4,23 @@ import cats.data.NonEmptyList
 import cats.effect.IO
 import me.amuxix.Bot
 import me.amuxix.wrappers.MessageEvent
+import me.amuxix.syntax.all._
 
 import scala.util.matching.Regex
 
 object Help extends Command {
   override def regex: Regex = "^help$".r
 
-  private def bold(string: String): String = s"**$string**"
+  implicit private class StringOps(string: String) {
+    def bold: String = s"**$string**"
+    def underline: String = s"__${string}__"
+  }
 
   private def commandHelp(enabledCommands: NonEmptyList[Command], command: Command): String = {
-    val name = if (enabledCommands.toList.contains(command)) bold(command.className) else command.className
+    val name = command.className
+      .when(enabledCommands.toList.contains(command))(_.bold)
+      .when(Bot.alwaysEnabled.toList.contains(command))(_.underline)
+
     s"$name(`${command.regex}`) - ${command.description}"
   }
 
@@ -22,7 +29,7 @@ object Help extends Command {
       enabledCommands <- Bot.enabledCommands(event.channel)
       enabledCommandHelp = commandHelp(enabledCommands, _)
       message = Bot.allCommands.filter(!_.isInstanceOf[Hidden]).map(enabledCommandHelp).mkString("\n")
-      _ <- event.sendMessage(message)
+      _ <- event.sendMessage(message).run
     } yield true
 
   override val description: String = "Show all existing commands and their descriptions"
