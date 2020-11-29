@@ -15,15 +15,15 @@ trait JDASyntax {
 
 final class JDAOps(private val jda: JDA) extends AnyVal {
 
-  def getUserByID(id: Long)(implicit userMap: Ref[IO, Map[Long, User]]): IO[Option[User]] =
+  def getUserByID(id: Long)(implicit userMap: Ref[IO, Map[Long, User]]): IO[User] =
     userMap.get.flatMap {
       _.get(id).fold {
         for {
-          jdaUser <- jda.retrieveUserById(id).get
-          user = jdaUser.map(new User(_))
-          _ <- user.fold(IO.unit)(role => userMap.update(_ + (id -> role)))
+          jdaUser <- jda.retrieveUserById(id).toIO
+          user = new User(jdaUser)
+          _ <- userMap.update(_ + (id -> user))
         } yield user
-      }(role => IO.pure(Some(role)))
+      }(role => IO.pure(role))
     }
 
   def getRoleByID(id: Long)(implicit roleMap: Ref[IO, Map[Long, Role]]): IO[Option[Role]] =

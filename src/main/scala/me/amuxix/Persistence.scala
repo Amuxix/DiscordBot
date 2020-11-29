@@ -7,12 +7,11 @@ import cats.effect.{IO, Resource}
 import cats.instances.list._
 import cats.syntax.foldable._
 import me.amuxix.Bot.{allCommands, allowedRoles, enabledCommands}
-import me.amuxix.commands.Command
 
 import scala.jdk.CollectionConverters._
 
 object Persistence {
-  val fileFolder = new File("/data")
+  val fileFolder = new File("data")
   val replacementsFile = new File(fileFolder, "replacements.txt")
   val allowedRolesFile = new File(fileFolder, "allowedRoles.txt")
   val enabledCommandsFile = new File(fileFolder, "enabledCommands.txt")
@@ -47,7 +46,7 @@ object Persistence {
 
   val loadEnabledCommands: IO[Unit] = load(enabledCommandsFile, enabledCommands)(_.flatMap(_.split(", ").toList match {
     case Nil            => None
-    case channel :: Nil => Some(channel.toLong -> Set.empty[Command])
+    case channel :: Nil => Some(channel.toLong -> Set.empty[AnyCommand])
     case channel :: tail =>
       val commands = tail.flatMap(commandName => allCommands.find(_.className.equalsIgnoreCase(commandName))).toSet
       Some(channel.toLong -> commands)

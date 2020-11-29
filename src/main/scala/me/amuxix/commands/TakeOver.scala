@@ -7,18 +7,17 @@ import me.amuxix.syntax.all._
 
 import scala.util.matching.Regex
 
-object TakeOver extends Command {
-  override def regex: Regex = "^take over$".r
+object TakeOver extends TextCommand {
+  override def pattern: Regex = "^take over$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
     for {
       leader <- Bot.muteLeader.get
       update <- leader match {
         case Some((id, _)) if id != event.author.id =>
-          event.jda.setWatching(event.author.name)
+          event.jda.setWatching(event.authorName)
           event
-            .sendMessage(s"${event.author.name} taken over mute following.")
-            .run
+            .sendMessage(s"${event.authorName} taken over mute following.")
             .as(event.author.isSelfMuted.map(event.author.id -> _))
         case o => IO.pure(o)
       }

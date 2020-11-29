@@ -9,4 +9,5 @@ class Guild(guild: JDAGuild) {
   def isOwner(user: User): Boolean = user.id == ownerID
   def isOwner(member: Member): Boolean = member.id == ownerID
   def roles: List[Role] = guild.getRoles.asScala.toList.map(new Role(_))
+  def getMember(user: User): Option[Member] = Option(guild.getMember(user.user)).map(new Member(_))
 }
