@@ -6,8 +6,8 @@ import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
-object StopSpam extends Command with Hidden {
-  override def regex: Regex = Command.all
+object StopSpam extends TextCommand with Hidden {
+  override def pattern: Regex = Command.all
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
     for {

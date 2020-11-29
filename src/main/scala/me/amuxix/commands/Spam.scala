@@ -8,14 +8,14 @@ import me.amuxix.Bot.userMap
 
 import scala.util.matching.Regex
 
-object Spam extends Command {
-  override def regex: Regex = s"^[Ss]pam ${Command.userID}$$".r
+object Spam extends TextCommand {
+  override def pattern: Regex = s"^[Ss]pam ${Command.userID}$$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
     event.content match {
       case regex(id) =>
         event.jda.getUserByID(id.toLong).flatMap {
-          case Some(user) if !user.isBot =>
+          case user if !user.isBot =>
             Bot.spamList.update(_ + user.id).as(true)
           case _ =>
             IO.pure(false)

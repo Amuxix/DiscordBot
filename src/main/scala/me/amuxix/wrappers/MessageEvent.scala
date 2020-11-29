@@ -1,11 +1,6 @@
 package me.amuxix.wrappers
 
-import java.io.File
-
-import me.amuxix.Action
-import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.{MessageChannel, Member => JDAMember, Message => JDAMessage, User => JDAUser}
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.entities.{MessageChannel, Member => JDAMember, Message => JDAMessage, User => JDAUser, Guild => JDAGuild}
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent
 
@@ -14,29 +9,24 @@ class MessageEvent(
   jdaChannel: MessageChannel,
   jdaAuthor: JDAUser,
   jdaMember: Option[JDAMember],
-) {
+  jdaGuild: Option[JDAGuild],
+) extends Event(jdaChannel, jdaAuthor, jdaMember, jdaGuild) {
   lazy val message: Message = new Message(jdaMessage)
-  lazy val channel: Channel = new Channel(jdaChannel)
-  lazy val author: User = new User(jdaAuthor)
-  lazy val authorMember: Option[Member] = jdaMember.map(new Member(_))
-
-  lazy val fromBot: Boolean = author.isBot
-
-  lazy val jda: JDA = jdaMessage.getJDA
-
-  def sendMessage(string: String): Action[Message] = channel.sendMessage(string)
-  def sendFile(file: File): Action[Message] = channel.sendFile(file)
   lazy val content: String = message.content
+  lazy val authorName = jdaMember.map(_.getNickname).getOrElse(author.name)
 }
 
 object MessageEvent {
 
-  implicit def fromMessageReceivedEvent(event: MessageReceivedEvent): MessageEvent =
-    new MessageEvent(event.getMessage, event.getChannel, event.getAuthor, Option(event.getMember))
-
   implicit def fromPrivateMessageReceivedEvent(event: PrivateMessageReceivedEvent): MessageEvent =
-    new MessageEvent(event.getMessage, event.getChannel, event.getAuthor, None)
+    new MessageEvent(event.getMessage, event.getChannel, event.getAuthor, None, None)
 
   implicit def fromGuildMessageReceivedEvent(event: GuildMessageReceivedEvent): MessageEvent =
-    new MessageEvent(event.getMessage, event.getChannel, event.getAuthor, Option(event.getMember))
+    new MessageEvent(
+      event.getMessage,
+      event.getChannel,
+      event.getAuthor,
+      Option(event.getMember),
+      Option(event.getGuild),
+    )
 }

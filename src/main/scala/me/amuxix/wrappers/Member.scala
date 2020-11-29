@@ -1,6 +1,6 @@
 package me.amuxix.wrappers
 
-import me.amuxix.Action
+import cats.effect.IO
 import me.amuxix.syntax.action._
 import net.dv8tion.jda.api.entities.{Member => JDAMember}
 
@@ -9,17 +9,19 @@ import scala.jdk.CollectionConverters._
 class Member(member: JDAMember) {
   lazy val id: Long = member.getIdLong
 
-  lazy val asUser = new User(member.getUser)
+  lazy val user: User = new User(member.getUser)
+
+  lazy val nickname: Option[String] = Option(member.getNickname)
 
   def isSelfMuted: Boolean = member.getVoiceState.isSelfMuted
 
   def isGuildMuted: Boolean = member.getVoiceState.isGuildMuted
 
-  def mute: Action[Unit] = member.mute(true).as(())
+  def mute: IO[Unit] = member.mute(true).toIO.as(())
 
-  def unmute: Action[Unit] = member.mute(false).as(())
+  def unmute: IO[Unit] = member.mute(false).toIO.as(())
 
-  def toggleMute: Action[Unit] = member.mute(!isGuildMuted).as(())
+  def toggleMute: IO[Unit] = member.mute(!isGuildMuted).toIO.as(())
 
   def roles: Set[Role] = member.getRoles.asScala.toSet.map(new Role(_))
 
