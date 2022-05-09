@@ -10,17 +10,14 @@ import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
-object Kill extends SecretHitlerTextCommand {
+object Kill extends SecretHitlerTextCommand:
   override def pattern: Regex = s"^kill ${Command.userID}$$".r
 
   override protected def secretHitlerCommand(regex: Regex, event: MessageEvent, game: Game): IO[Option[Game]] =
-    event.content.toLowerCase match {
+    event.content.toLowerCase match
       case regex(id) =>
         event.jda.getUserByID(id.toLong).flatMap { target =>
-          game match {
+          game match
             case game: WaitingForPolicyResolution => game.kill(target)
             case _                                => IO.pure(Some(game))
-          }
         }
-    }
-}

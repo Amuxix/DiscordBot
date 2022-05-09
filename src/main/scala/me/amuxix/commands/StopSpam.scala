@@ -6,7 +6,7 @@ import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
-object StopSpam extends TextCommand with Hidden {
+object StopSpam extends TextCommand with Hidden:
   override def pattern: Regex = Command.all
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
@@ -15,12 +15,10 @@ object StopSpam extends TextCommand with Hidden {
       author = event.author
       id = author.id
       stop <-
-        if list.contains(id) then {
+        if list.contains(id) then
           IO(println(s"Stopped spamming ${author.name}")) *> Bot.spamList.update(_ - id).as(true)
-        } else {
+        else
           IO.pure(false)
-        }
     yield stop
 
   override val description: String = "Stops the spam messages"
-}

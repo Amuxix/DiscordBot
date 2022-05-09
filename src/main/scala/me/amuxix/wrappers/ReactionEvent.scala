@@ -13,7 +13,7 @@ class ReactionEvent(
   jdaMember: Option[JDAMember],
   messageID: Long,
   jdaGuild: Option[JDAGuild],
-) extends Event(jdaChannel, jdaAuthor, jdaMember, jdaGuild) {
+) extends Event(jdaChannel, jdaAuthor, jdaMember, jdaGuild):
 
   lazy val content: String = emoji
 
@@ -22,9 +22,8 @@ class ReactionEvent(
       message <- jdaChannel.retrieveMessageById(messageID).toIO
       _ <- message.addReaction(emoji).toIO
     yield ()
-}
 
-object ReactionEvent {
+object ReactionEvent:
 
   implicit def fromGuildMessageReactionAddEvent(event: GuildMessageReactionAddEvent): ReactionEvent =
     new ReactionEvent(
@@ -45,4 +44,3 @@ object ReactionEvent {
       event.getMessageIdLong,
       None,
     )
-}

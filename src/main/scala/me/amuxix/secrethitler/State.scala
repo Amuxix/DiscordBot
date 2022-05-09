@@ -7,7 +7,7 @@ import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
-object State extends TextCommand {
+object State extends TextCommand:
   override def pattern: Regex = "^get game state$".r
 
   override protected def apply(pattern: Regex, event: MessageEvent): IO[Boolean] =
@@ -17,4 +17,3 @@ object State extends TextCommand {
     yield true
 
   override val description: String = ""
-}

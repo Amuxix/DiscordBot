@@ -10,13 +10,13 @@ import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
-object SecretHitler extends TextCommand {
+object SecretHitler extends TextCommand:
   override def pattern: Regex = "^create secret hitler$".r
 
   private lazy val message =
     "You have been added to a game of Secret Hitler! You can leave by typing `leave game` in a channel I can read."
 
-  override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] = {
+  override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
     val author = event.author
     val players = author.voiceChannel.fold(List(author))(_.members.map(_.user))
     val game = new CreatedGame(players.toSet, event.channel, event.guild.get)
@@ -27,8 +27,6 @@ object SecretHitler extends TextCommand {
       _ <- players.traverse_(_.sendMessage(message))
       _ <- Bot.secretHitler.set(Some(game)).as(true)
     yield true
-  }
 
   override val description: String =
     "Allows the creation of a secret hitler games as well as all the required commands."
-}

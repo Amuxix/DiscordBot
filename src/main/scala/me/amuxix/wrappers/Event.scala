@@ -11,7 +11,7 @@ abstract class Event(
   jdaAuthor: JDAUser,
   jdaMember: Option[JDAMember],
   jdaGuild: Option[JDAGuild],
-) {
+):
   lazy val author: User = new User(jdaAuthor)
   lazy val authorMember: Option[Member] = jdaMember.map(new Member(_)).orElse(author.member)
   lazy val channel: Channel = new Channel(jdaChannel)
@@ -24,4 +24,3 @@ abstract class Event(
   def sendFile(file: File): IO[Message] = channel.sendFile(file)
 
   def content: String
-}

@@ -13,7 +13,7 @@ import me.amuxix.wrappers.{Channel, Guild, User}
 
 import scala.util.Random
 
-object Game {
+object Game:
   val policyDeck: List[Policy] = List.fill(6)(LiberalPolicy) ++ List.fill(11)(FascistPolicy)
   val minimumPlayers: Int = 5
   val maximumPlayers: Int = 10
@@ -22,7 +22,7 @@ object Game {
   val fascistPoliciesToUnlockVeto: Int = 5
   val hitlerElectionWinPoliciesNeeded: Int = 3
 
-  def revealTopCards(game: StartedGame): IO[GameBeforeNomination] = {
+  def revealTopCards(game: StartedGame): IO[GameBeforeNomination] =
     val policies = game.policies.drawPolicies()
     for
       _ <- game.president.sendMessage(
@@ -44,7 +44,6 @@ object Game {
       game.vetoUnlocked,
     )
 
-  }
 
   def kill(game: StartedGame): IO[WaitingForPolicyResolution] =
     for
@@ -130,46 +129,41 @@ object Game {
       s"${president.mention} is the President, use `nominate @mention` to nominate your chancellor.",
     )
     .as(())
-}
 
-sealed trait Game {
+sealed trait Game:
   def channel: Channel
   def guild: Guild
   def availableCommands: Map[User, Set[SecretHitlerCommand]]
   def players: Set[User]
 
   def isPlaying(user: User): Boolean = players.contains(user)
-}
 
-class CreatedGame(val players: Set[User], val channel: Channel, val guild: Guild) extends Game {
+class CreatedGame(val players: Set[User], val channel: Channel, val guild: Guild) extends Game:
 
   override def availableCommands: Map[User, Set[SecretHitlerCommand]] =
     Map.empty.withDefaultValue(Set(StartSecretHitler, LeaveGame, JoinGame))
 
   lazy val start: IO[Option[Game]] =
-    players.size match {
+    players.size match
       case i if i < Game.minimumPlayers =>
         channel.sendMessage(s"Not enough players to start at least ${Game.minimumPlayers} required.").as(this.some)
       case i if i > Game.maximumPlayers =>
         channel.sendMessage(s"Too many players to start maximum players is ${Game.minimumPlayers}.").as(this.some)
       case _ => startGame
-    }
 
   private lazy val hitlerKnows: Boolean = players.size < 7
 
-  private lazy val hitlerIsKnowMessage: String = {
+  private lazy val hitlerIsKnowMessage: String =
     val knows = if hitlerKnows then "knows" else "doesn't know"
     s"Hitler $knows who the fascists are"
-  }
 
-  private lazy val policyEffects = players.size match {
+  private lazy val policyEffects = players.size match
     case 9 | 10 => Game.highPolicyEffects
     case 7 | 8  => Game.mediumPolicyEffects
     case 5 | 6  => Game.lowPolicyEffects
     case _      => Game.lowPolicyEffects
-  }
 
-  private lazy val startGame: IO[Option[GameBeforeNomination]] = {
+  private lazy val startGame: IO[Option[GameBeforeNomination]] =
     val numberOfFascists = (players.size - 1) / 2
     val shuffled = Random.shuffle(players.toList)
     val (allFascists, liberals) = shuffled.splitAt(numberOfFascists)
@@ -218,8 +212,6 @@ class CreatedGame(val players: Set[User], val channel: Channel, val guild: Guild
       Policies(),
       false,
     ).some
-  }
-}
 
 sealed abstract class StartedGame(
   val guild: Guild,
@@ -232,13 +224,13 @@ sealed abstract class StartedGame(
   val policies: Policies,
   val vetoUnlocked: Boolean,
 ) extends Game
-    with Finishable {
+    with Finishable:
   lazy val roleMap: Map[User, Role] = roles.toMap
   lazy val playerList: List[User] = roles.map(_._1)
   override lazy val players: Set[User] = roleMap.keySet
   def announceNextPresident(nextPresident: President): IO[Unit] = Game.announcePresident(channel, nextPresident)
 
-  lazy val nextRound: IO[GameBeforeNomination] = {
+  lazy val nextRound: IO[GameBeforeNomination] =
     val nextPresident = president.next(playerList)
     println(s"fascists ${policies.enacted.fascist}")
     println(s"Veto unlocked? ${policies.enacted.fascist >= Game.fascistPoliciesToUnlockVeto}")
@@ -255,15 +247,13 @@ sealed abstract class StartedGame(
         vetoUnlocked,
       ),
     )
-  }
-}
 
 sealed trait Finishable { this: StartedGame =>
 
   /** Checks if a given game has finished
     * @return None if game has ended, a game state otherwise
     */
-  def attemptToFinishGame(currentChancellor: Option[User]): IO[Option[StartedGame]] = {
+  def attemptToFinishGame(currentChancellor: Option[User]): IO[Option[StartedGame]] =
     def hitlerWasElected(hitler: Option[User], currentChancellor: Option[User]) =
       (for
         currentChancellor <- currentChancellor
@@ -274,18 +264,16 @@ sealed trait Finishable { this: StartedGame =>
       user
     }
 
-    if policies.enacted.fascist >= hitlerElectionWinPoliciesNeeded && hitlerWasElected(hitler, currentChancellor) then {
+    if policies.enacted.fascist >= hitlerElectionWinPoliciesNeeded && hitlerWasElected(hitler, currentChancellor) then
       channel.sendMessage("Hitler was elected chancellor! Fascists win!").as(None)
-    } else if policies.enacted.fascist == fascistPoliciesToWin then {
+    else if policies.enacted.fascist == fascistPoliciesToWin then
       channel.sendMessage(s"All $fascistPoliciesToWin fascist policies were enacted! Fascists win!").as(None)
-    } else if policies.enacted.liberal == liberalPoliciesToWin then {
+    else if policies.enacted.liberal == liberalPoliciesToWin then
       channel.sendMessage(s"All $liberalPoliciesToWin liberal policies were enacted! Liberals win!").as(None)
-    } else if hitler.isEmpty then {
+    else if hitler.isEmpty then
       channel.sendMessage(s"Hilter has been killed! Liberals win!").as(None)
-    } else {
+    else
       IO.pure(Some(this))
-    }
-  }
 }
 
 sealed trait Updateable[+B <: StartedGame] { this: StartedGame =>
@@ -293,7 +281,7 @@ sealed trait Updateable[+B <: StartedGame] { this: StartedGame =>
   def withRoles(roles: List[(User, Role)], president: President): B
   def withPresidentOverride(president: User): B
 
-  protected def enactPolicy(policy: Policy, doEffects: Boolean): IO[StartedGame] = {
+  protected def enactPolicy(policy: Policy, doEffects: Boolean): IO[StartedGame] =
     val game = withPolicies(policies.enact(policy))
     for
       _ <- channel.sendMessage(s"A $policy policy has been enacted!")
@@ -302,13 +290,11 @@ sealed trait Updateable[+B <: StartedGame] { this: StartedGame =>
       )
 
       gameWithEffects <-
-        if doEffects then {
+        if doEffects then
           game.policyEffects.get(game.policies.enacted.fascist).fold[IO[StartedGame]](game.nextRound)(_(game))
-        } else {
+        else
           game.nextRound
-        }
     yield gameWithEffects
-  }
 
   //Set failedElections to 0
   //Check Win condition
@@ -335,13 +321,13 @@ class GameBeforeNomination(
       failedElections,
       policies,
       vetoUnlocked,
-    ) {
+    ):
 
   override def availableCommands: Map[User, Set[SecretHitlerCommand]] = Map[User, Set[SecretHitlerCommand]](
     president.current -> Set(NominateChancellor),
   ).withDefaultValue(Set.empty)
 
-  def nominateChancellor(candidate: User): IO[Option[StartedGame]] = candidate match {
+  def nominateChancellor(candidate: User): IO[Option[StartedGame]] = candidate match
     case candidate if president.current == candidate =>
       channel.sendMessage("You cannot nominate yourself for chancellor.").as(this.some)
     case candidate if lastChancellor.contains(candidate) =>
@@ -353,7 +339,6 @@ class GameBeforeNomination(
         message <- channel.sendMessage(s"${candidate.name} has been nominated for chancellor cast your votes now!")
         _ <- message.addReactions("?", "?")
       yield withCandidate(candidate).some
-  }
 
   private def withCandidate(candidate: User): GameDuringElection =
     new GameDuringElection(
@@ -368,7 +353,6 @@ class GameBeforeNomination(
       policies,
       vetoUnlocked,
     )
-}
 
 class GameDuringElection(
   guild: Guild,
@@ -393,7 +377,7 @@ class GameDuringElection(
       policies,
       vetoUnlocked,
     )
-    with Updateable[GameBeforeNomination] {
+    with Updateable[GameBeforeNomination]:
 
   override def availableCommands: Map[User, Set[SecretHitlerCommand]] =
     Map.empty.withDefaultValue(Vote.all.toList.toSet)
@@ -438,11 +422,10 @@ class GameDuringElection(
     )
 
   private def addVote(user: User, vote: Vote): IO[Map[User, Vote]] =
-    if votes.contains(user) then {
+    if votes.contains(user) then
       user.sendMessage("You already voted, your vote remains unchanged.").as(votes)
-    } else {
+    else
       IO.pure(votes + (user -> vote))
-    }
 
   private def failedVote(president: President): GameBeforeNomination =
     new GameBeforeNomination(
@@ -488,9 +471,9 @@ class GameDuringElection(
       }
     yield checkedGame
 
-  private lazy val failVote: IO[Option[StartedGame]] = {
+  private lazy val failVote: IO[Option[StartedGame]] =
     lazy val nextPresident = president.next(playerList)
-    val (message, game) = failedElections match {
+    val (message, game) = failedElections match
       case 0 =>
         val message = s"Vote failed!"
         val game = announceNextPresident(nextPresident).as(Some(failedVote(nextPresident)))
@@ -521,12 +504,10 @@ class GameDuringElection(
         yield updatedGame
 
         (message, game)
-    }
     for
       _ <- channel.sendMessage(message)
       game <- game
     yield game
-  }
 
   private def withVotes(votes: Map[User, Vote]): GameDuringElection =
     new GameDuringElection(
@@ -549,15 +530,13 @@ class GameDuringElection(
       votePassed = votes.values.count(_ == GameVote.Ja) > players.size / 2
       voteFailed = votes.values.count(_ == GameVote.Nein) >= players.size / 2f
       game <-
-        if votePassed then {
+        if votePassed then
           passVote
-        } else if voteFailed then {
+        else if voteFailed then
           failVote
-        } else {
+        else
           IO.pure(Some(withVotes(votes)))
-        }
     yield game
-}
 
 class GameWithChancellorElected(
   guild: Guild,
@@ -579,16 +558,16 @@ class GameWithChancellorElected(
       failedElections,
       policies,
       vetoUnlocked,
-    ) {
+    ):
 
   override def availableCommands: Map[User, Set[SecretHitlerCommand]] = Map[User, Set[SecretHitlerCommand]](
     president.current -> Set(Discard, PickFascist, PickLiberal),
   ).withDefaultValue(Set.empty)
 
   def discardPolicy(policy: Policy): IO[Option[StartedGame]] =
-    if !policies.floating.contains(policy) then {
+    if !policies.floating.contains(policy) then
       president.sendMessage("You cannot discard what you do not have!").as(this.some)
-    } else {
+    else
       val updatedPolicies = policies.discardPolicy(policy)
       val vetoMessage =
         if vetoUnlocked then " Veto power has been unlocked you can propose a veto by saying `I wish to veto this agenda`."
@@ -611,8 +590,6 @@ class GameWithChancellorElected(
         failedElections,
         vetoUnlocked,
       ).some
-    }
-}
 
 class GameWaitingForChancellorDecision(
   guild: Guild,
@@ -636,7 +613,7 @@ class GameWaitingForChancellorDecision(
       policies,
       vetoUnlocked,
     )
-    with Updateable[GameWaitingForChancellorDecision] {
+    with Updateable[GameWaitingForChancellorDecision]:
 
   override def availableCommands: Map[User, Set[SecretHitlerCommand]] =
     (if vetoUnlocked && !vetoDenied then {
@@ -707,7 +684,6 @@ class GameWaitingForChancellorDecision(
       true,
     ).some
 
-}
 
 class GameWithVetoRequest(
   guild: Guild,
@@ -729,7 +705,7 @@ class GameWithVetoRequest(
       failedElections,
       policies,
       vetoUnlocked,
-    ) {
+    ):
 
   override def availableCommands: Map[User, Set[SecretHitlerCommand]] =
     Map[User, Set[SecretHitlerCommand]](president.current -> Vote.all.toList.toSet).withDefaultValue(Set.empty)
@@ -766,7 +742,6 @@ class GameWithVetoRequest(
       true,
       true,
     ).some
-}
 
 class WaitingForPolicyResolution(
   guild: Guild,
@@ -790,7 +765,7 @@ class WaitingForPolicyResolution(
       policies,
       vetoUnlocked,
     )
-    with Updateable[GameBeforeNomination] {
+    with Updateable[GameBeforeNomination]:
 
   override def availableCommands: Map[User, Set[SecretHitlerCommand]] =
     Map[User, Set[SecretHitlerCommand]](president.current -> Set(command)).withDefaultValue(Set.empty)
@@ -868,4 +843,3 @@ class WaitingForPolicyResolution(
     channel
       .sendMessage(s"${target.name} is now the president. Normal order will resume afterwards.")
       .as(withPresidentOverride(target).some)
-}

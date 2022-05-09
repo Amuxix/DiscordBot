@@ -8,11 +8,11 @@ import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
-object AllowGroup extends TextCommand {
+object AllowGroup extends TextCommand:
   override def pattern: Regex = s"^allow (?:group|role) ${Command.groupID}$$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
-    event.content match {
+    event.content match
       case regex(id) =>
         event.jda.getRoleByID(id.toLong).flatMap {
           case None => IO.pure(false)
@@ -25,7 +25,5 @@ object AllowGroup extends TextCommand {
         }
       case _ =>
         IO.pure(false)
-    }
 
   override val description: String = "Allows users from the given group to use this bot."
-}

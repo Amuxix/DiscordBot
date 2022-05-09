@@ -7,11 +7,11 @@ import me.amuxix.{Bot, Persistence}
 
 import scala.util.matching.Regex
 
-object DisableCommand extends TextCommand {
+object DisableCommand extends TextCommand:
   override def pattern: Regex = "^disable (.+)$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
-    event.content match {
+    event.content match
       case regex(commandName) =>
         for
           enabledCommands <- Bot.enabledCommands(event.channel)
@@ -40,7 +40,5 @@ object DisableCommand extends TextCommand {
               yield ()
           }
         yield true
-    }
 
   override val description: String = "Disables the given command"
-}

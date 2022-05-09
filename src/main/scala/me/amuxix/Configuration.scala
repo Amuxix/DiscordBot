@@ -8,8 +8,7 @@ case class Configuration(
   token: String,
 ) derives ConfigReader
 
-object Configuration {
+object Configuration:
 
   def fromConfig(config: Config = ConfigFactory.load()): Configuration =
     ConfigSource.fromConfig(config).loadOrThrow[Configuration]
-}

@@ -10,7 +10,7 @@ import scala.util.matching.Regex
 
 trait SecretHitlerCommand extends Hidden
 
-trait SecretHitlerTextCommand extends TextCommand with SecretHitlerCommand {
+trait SecretHitlerTextCommand extends TextCommand with SecretHitlerCommand:
   protected def secretHitlerCommand(regex: Regex, event: MessageEvent, game: Game): IO[Option[Game]]
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
@@ -32,9 +32,8 @@ trait SecretHitlerTextCommand extends TextCommand with SecretHitlerCommand {
     yield executed
 
   override val description: String = ""
-}
 
-trait SecretHitlerReactionCommand extends ReactionCommand with SecretHitlerCommand {
+trait SecretHitlerReactionCommand extends ReactionCommand with SecretHitlerCommand:
   protected def secretHitlerCommand(emoji: String, event: ReactionEvent, game: Game): IO[Option[Game]]
 
   override protected def apply(emoji: String, event: ReactionEvent): IO[Boolean] =
@@ -52,4 +51,3 @@ trait SecretHitlerReactionCommand extends ReactionCommand with SecretHitlerComma
     yield executed
 
   override val description: String = ""
-}

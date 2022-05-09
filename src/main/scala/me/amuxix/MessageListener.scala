@@ -22,7 +22,7 @@ object MessageListener extends ListenerAdapter { out =>
   )(
     log: (E, Command[T, E]) => IO[Unit],
   ): IO[Unit] =
-    if !event.author.isBot then {
+    if !event.author.isBot then
       commands
         .sortBy(-_.pattern.toString.length)
         .foldLeft(IO.pure(false)) {
@@ -30,18 +30,16 @@ object MessageListener extends ListenerAdapter { out =>
             for
               stopped <- io
               stop <-
-                if stopped then {
+                if stopped then
                   IO.pure(true)
-                } else {
+                else
                   log(event, command) *> command.run(command.pattern, event, privateChannel)
-                }
             yield stop
           case (io, _) => io
         }
         .as(())
-    } else {
+    else
       IO.unit
-    }
 
   private def runTextCommandList(
     event: MessageEvent,
@@ -50,11 +48,10 @@ object MessageListener extends ListenerAdapter { out =>
   ): IO[Unit] =
     runCommandList(event, commands, privateChannel) { case (event, command) =>
       lazy val subgroups = command.pattern.findFirstMatchIn(event.content).get.subgroups.mkString(" ")
-      if command.pattern != Command.all then {
+      if command.pattern != Command.all then
         IO(println(s"${event.author} issued text command $command $subgroups".trim))
-      } else {
+      else
         IO.unit
-      }
     }
 
   def runReactionCommandList(event: ReactionEvent, commands: List[ReactionCommand], privateChannel: Boolean): IO[Unit] =

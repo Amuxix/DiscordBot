@@ -8,11 +8,11 @@ import me.amuxix.Bot.userMap
 
 import scala.util.matching.Regex
 
-object Mute extends TextCommand {
+object Mute extends TextCommand:
   override def pattern: Regex = s"^(?:un)?mute ${Command.userID}$$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
-    event.content match {
+    event.content match
       case regex(id) =>
         println(s"Muting $id")
         event.jda.getUserByID(id.toLong).flatMap { user =>
@@ -20,7 +20,5 @@ object Mute extends TextCommand {
           if !user.isBot then user.member.traverse_(_.toggleMute).as(true) else IO.pure(false)
         }
       case _ => IO.pure(false)
-    }
 
   override val description: String = "Mutes the mentioned person."
-}

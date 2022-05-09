@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.Member as JDAMember
 
 import scala.jdk.CollectionConverters.*
 
-class Member(member: JDAMember) {
+class Member(member: JDAMember):
   lazy val id: Long = member.getIdLong
 
   lazy val user: User = new User(member.getUser)
@@ -28,4 +28,3 @@ class Member(member: JDAMember) {
   def hasRole(role: Role): Boolean = roles.exists(_.id == role.id)
 
   def isGuildOwner: Boolean = member.getGuild.getOwnerIdLong == id
-}

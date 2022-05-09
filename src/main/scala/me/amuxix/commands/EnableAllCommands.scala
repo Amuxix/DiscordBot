@@ -6,7 +6,7 @@ import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
-object EnableAllCommands extends TextCommand {
+object EnableAllCommands extends TextCommand:
   override def pattern: Regex = "^enable all commands$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
@@ -19,4 +19,3 @@ object EnableAllCommands extends TextCommand {
     yield true
 
   override val description: String = "Disables all commands that can be disabled"
-}

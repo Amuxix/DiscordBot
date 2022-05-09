@@ -7,13 +7,12 @@ import me.amuxix.wrappers.{Event, MessageEvent, ReactionEvent}
 
 import scala.util.matching.Regex
 
-object Command {
+object Command:
   val all = ".+".r
   val userID = "(?:<@!)?(\\d+)(?:>)?".r
   val groupID = "(?:<@&)?(\\d+)(?:>)?".r
-}
 
-sealed abstract class Command[T, E <: Event] extends Named {
+sealed abstract class Command[T, E <: Event] extends Named:
   def pattern: T
 
   protected def apply(pattern: T, event: E): IO[Boolean]
@@ -35,12 +34,9 @@ sealed abstract class Command[T, E <: Event] extends Named {
   override def toString: String = className
 
   def matches(event: E): Boolean
-}
 
-abstract class TextCommand extends Command[Regex, MessageEvent] {
+abstract class TextCommand extends Command[Regex, MessageEvent]:
   override def matches(event: MessageEvent): Boolean = pattern.matches(event.content)
-}
 
-abstract class ReactionCommand extends Command[String, ReactionEvent] {
+abstract class ReactionCommand extends Command[String, ReactionEvent]:
   override def matches(event: ReactionEvent): Boolean = pattern == event.content
-}

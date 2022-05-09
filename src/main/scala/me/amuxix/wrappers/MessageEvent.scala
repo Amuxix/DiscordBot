@@ -13,13 +13,12 @@ class MessageEvent(
   jdaAuthor: JDAUser,
   jdaMember: Option[JDAMember],
   jdaGuild: Option[JDAGuild],
-) extends Event(jdaChannel, jdaAuthor, jdaMember, jdaGuild) {
+) extends Event(jdaChannel, jdaAuthor, jdaMember, jdaGuild):
   lazy val message: Message = new Message(jdaMessage)
   lazy val content: String = message.content
   lazy val authorName: String = jdaMember.flatMap(m => Option(m.getNickname)).getOrElse(author.name)
-}
 
-object MessageEvent {
+object MessageEvent:
 
   implicit def fromPrivateMessageReceivedEvent(event: PrivateMessageReceivedEvent): MessageEvent =
     new MessageEvent(event.getMessage, event.getChannel, event.getAuthor, None, None)
@@ -54,4 +53,3 @@ object MessageEvent {
         }
       }
   }*/
-}
