@@ -14,6 +14,7 @@ object Mute extends TextCommand {
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
     event.content match {
       case regex(id) =>
+        println(s"Muting $id")
         event.jda.getUserByID(id.toLong).flatMap { user =>
           println(s"Muting ${user.name}")
           if (!user.isBot) user.member.traverse_(_.toggleMute).as(true) else IO.pure(false)

@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.instances.list._
 import cats.syntax.foldable._
 import cats.syntax.option._
-import me.amuxix.secrethitler.Game.{PolicyEffects, fascistPoliciesNeeded, hitlerElectionWinPoliciesNeeded, liberalPoliciesNeeded}
+import me.amuxix.secrethitler.Game.{PolicyEffects, fascistPoliciesToWin, hitlerElectionWinPoliciesNeeded, liberalPoliciesToWin}
 import me.amuxix.secrethitler.{Vote => GameVote}
 import me.amuxix.secrethitler.Vote.Vote
 import me.amuxix.secrethitler.commands._
@@ -17,8 +17,9 @@ object Game {
   val policyDeck: List[Policy] = List.fill(6)(LiberalPolicy) ++ List.fill(11)(FascistPolicy)
   val minimumPlayers: Int = 5
   val maximumPlayers: Int = 10
-  val liberalPoliciesNeeded: Int = 5
-  val fascistPoliciesNeeded: Int = 6
+  val liberalPoliciesToWin: Int = 5
+  val fascistPoliciesToWin: Int = 6
+  val fascistPoliciesToUnlockVeto: Int = 5
   val hitlerElectionWinPoliciesNeeded: Int = 3
 
   def revealTopCards(game: StartedGame): IO[GameBeforeNomination] = {
@@ -59,7 +60,7 @@ object Game {
       game.lastChancellor,
       game.policies,
       game.failedElections,
-      game.vetoUnlocked,
+      game.policies.enacted.fascist >= Game.fascistPoliciesToUnlockVeto,
       Kill,
     )
 
@@ -239,6 +240,8 @@ sealed abstract class StartedGame(
 
   lazy val nextRound: IO[GameBeforeNomination] = {
     val nextPresident = president.next(playerList)
+    println(s"fascists ${policies.enacted.fascist}")
+    println(s"Veto unlocked? ${policies.enacted.fascist >= Game.fascistPoliciesToUnlockVeto}")
     announceNextPresident(nextPresident).as(
       new GameBeforeNomination(
         guild,
@@ -273,10 +276,10 @@ sealed trait Finishable { this: StartedGame =>
 
     if (policies.enacted.fascist >= hitlerElectionWinPoliciesNeeded && hitlerWasElected(hitler, currentChancellor)) {
       channel.sendMessage("Hitler was elected chancellor! Fascists win!").as(None)
-    } else if (policies.enacted.fascist == fascistPoliciesNeeded) {
-      channel.sendMessage(s"All $fascistPoliciesNeeded fascist policies were enacted! Fascists win!").as(None)
-    } else if (policies.enacted.liberal == liberalPoliciesNeeded) {
-      channel.sendMessage(s"All $liberalPoliciesNeeded liberal policies were enacted! Liberals win!").as(None)
+    } else if (policies.enacted.fascist == fascistPoliciesToWin) {
+      channel.sendMessage(s"All $fascistPoliciesToWin fascist policies were enacted! Fascists win!").as(None)
+    } else if (policies.enacted.liberal == liberalPoliciesToWin) {
+      channel.sendMessage(s"All $liberalPoliciesToWin liberal policies were enacted! Liberals win!").as(None)
     } else if (hitler.isEmpty) {
       channel.sendMessage(s"Hilter has been killed! Liberals win!").as(None)
     } else {
@@ -502,14 +505,13 @@ class GameDuringElection(
         val policy = updatedPolicies.floating.head
         val message = s"Vote failed for 3rd time in a row. $policy policy was enacted."
         val game = for {
-          _ <- announceNextPresident(nextPresident)
-          game <- enactPolicy(policy, doEffects = false)
+          game <- enactPolicy(policy, doEffects = false) //This selects the next president
           beforeNomination = new GameBeforeNomination(
             game.guild,
             game.channel,
             game.policyEffects,
             game.roles,
-            nextPresident,
+            game.president,
             game.lastChancellor,
             0,
             game.policies,
@@ -834,7 +836,7 @@ class WaitingForPolicyResolution(
 
   def kill(target: User): IO[Option[StartedGame]] =
     for {
-      _ <- channel.sendMessage(s"${target.name} was kill.")
+      _ <- channel.sendMessage(s"${target.name} was killed!")
       filteredRoles = roles.filter {
         case (user, _) if user == target => false
         case _                           => true
