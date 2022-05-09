@@ -13,7 +13,7 @@ object EnableCommand extends TextCommand {
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
     event.content match {
       case regex(commandName) =>
-        for {
+        for
           enabledCommands <- Bot.enabledCommands(event.channel)
           command = Bot.allCommands
             .find(_.className.equalsIgnoreCase(commandName))
@@ -21,25 +21,25 @@ object EnableCommand extends TextCommand {
           noCommand = event.sendMessage(s"No command named `$commandName` found!").as(())
           _ <- command.fold(noCommand) {
             case command if command == SecretHitler =>
-              for {
+              for
                 _ <- Bot.enabledCommands.update { enabledCommandsMap =>
                   val enabledCommands = enabledCommandsMap.getOrElse(event.channel.id, Set.empty)
                   enabledCommandsMap + (event.channel.id -> (enabledCommands ++ Bot.secretHitlerCommands.toList))
                 }
                 _ <- event.sendMessage(s"Enabled all secret hitler commands.")
                 _ <- Persistence.saveEnabledCommands
-              } yield ()
+              yield ()
             case command =>
-              for {
+              for
                 _ <- Bot.enabledCommands.update { enabledCommandsMap =>
                   val enabledCommands = enabledCommandsMap.getOrElse(event.channel.id, Set.empty)
                   enabledCommandsMap + (event.channel.id -> (enabledCommands + command))
                 }
                 _ <- event.sendMessage(s"Enabled `${command.className}` command.")
                 _ <- Persistence.saveEnabledCommands
-              } yield ()
+              yield ()
           }
-        } yield true
+        yield true
     }
 
   override val description: String = "Enables the given command"

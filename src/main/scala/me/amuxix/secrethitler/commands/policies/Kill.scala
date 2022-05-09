@@ -5,7 +5,7 @@ import me.amuxix.Bot.userMap
 import me.amuxix.commands.Command
 import me.amuxix.secrethitler.commands.SecretHitlerTextCommand
 import me.amuxix.secrethitler.{Game, WaitingForPolicyResolution}
-import me.amuxix.syntax.all._
+import me.amuxix.syntax.all.*
 import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex

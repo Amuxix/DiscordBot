@@ -10,13 +10,13 @@ object DisableAllCommands extends TextCommand {
   override def pattern: Regex = "^disable all commands$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
-    for {
+    for
       _ <- Bot.enabledCommands.update { enabledCommandsMap =>
         enabledCommandsMap + (event.channel.id -> Set.empty)
       }
       _ <- event.sendMessage(s"Disabled all commands.")
       _ <- Persistence.saveEnabledCommands
-    } yield true
+    yield true
 
   override val description: String = "Enables all commands"
 }

@@ -11,10 +11,10 @@ object State extends TextCommand {
   override def pattern: Regex = "^get game state$".r
 
   override protected def apply(pattern: Regex, event: MessageEvent): IO[Boolean] =
-    for {
+    for
       game <- Bot.secretHitler.get
       _ <- event.sendMessage(game.map(_.getClass.getSimpleName).getOrElse("")).as(Some(game))
-    } yield true
+    yield true
 
   override val description: String = ""
 }

@@ -5,5 +5,5 @@ trait ChainingSyntax {
 }
 
 final class ChainingOps[A](private val self: A) extends AnyVal {
-  def when(cond: Boolean)(f: A => A): A = if (cond) f(self) else self
+  def when(cond: Boolean)(f: A => A): A = if cond then f(self) else self
 }

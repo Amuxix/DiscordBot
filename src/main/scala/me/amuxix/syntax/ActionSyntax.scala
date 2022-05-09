@@ -17,5 +17,5 @@ final class ActionOps[A](val action: RestAction[A]) extends AnyVal {
     val p = Promise[A]()
     action.queue(p.success, p.failure)
     p.future
-  })(Bot.cs)
+  })
 }

@@ -1,8 +1,8 @@
 package me.amuxix.wrappers
 
-import net.dv8tion.jda.api.entities.{Guild => JDAGuild}
+import net.dv8tion.jda.api.entities.Guild as JDAGuild
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 class Guild(guild: JDAGuild) {
   lazy val ownerID: Long = guild.getOwnerIdLong

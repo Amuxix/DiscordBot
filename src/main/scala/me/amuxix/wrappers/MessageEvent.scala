@@ -3,7 +3,7 @@ package me.amuxix.wrappers
 import java.util.concurrent.{CancellationException, CompletableFuture, CompletionException}
 
 import cats.effect.IO
-import net.dv8tion.jda.api.entities.{MessageChannel, Guild => JDAGuild, Member => JDAMember, Message => JDAMessage, User => JDAUser}
+import net.dv8tion.jda.api.entities.{MessageChannel, Guild as JDAGuild, Member as JDAMember, Message as JDAMessage, User as JDAUser}
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent
 
@@ -33,7 +33,7 @@ object MessageEvent {
       Option(event.getGuild),
     )
 
-  implicit class IOOps(io: IO.type) {
+  /*implicit class IOOps(io: IO.type) {
 
     def fromJavaFuture[A](cf: IO[CompletableFuture[A]]): IO[A] =
       cf.flatMap { cf =>
@@ -53,5 +53,5 @@ object MessageEvent {
           IO(cf.cancel(true)).void
         }
       }
-  }
+  }*/
 }

@@ -10,8 +10,8 @@ object JoinGame extends SecretHitlerTextCommand {
   override def pattern: Regex = "^join game$".r
 
   override protected def secretHitlerCommand(regex: Regex, event: MessageEvent, game: Game): IO[Option[Game]] =
-    for {
+    for
       _ <- event.sendMessage(s"${event.authorName} joined the game.")
       players = game.players + event.author
-    } yield Some(new CreatedGame(players, game.channel, event.guild.get))
+    yield Some(new CreatedGame(players, game.channel, event.guild.get))
 }

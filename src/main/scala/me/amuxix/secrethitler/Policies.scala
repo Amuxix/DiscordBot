@@ -1,6 +1,6 @@
 package me.amuxix.secrethitler
 
-import me.amuxix.secrethitler.{FascistPolicy => FascistPolicy, LiberalPolicy => LiberalPolicy, Policy}
+import me.amuxix.secrethitler.{FascistPolicy as FascistPolicy, LiberalPolicy as LiberalPolicy, Policy}
 
 import scala.util.Random
 
@@ -20,17 +20,17 @@ case class Policies(
 ) {
 
   def drawPolicies(amount: Int = 3): Policies =
-    if (floating.nonEmpty) {
-      if (amount == floating.size) {
+    if floating.nonEmpty then {
+      if amount == floating.size then {
         this
-      } else if (amount < floating.size) {
+      } else if amount < floating.size then {
         val (newFloating, backToDeck) = floating.splitAt(amount)
         copy(floating = newFloating, drawPile = backToDeck ++ drawPile)
       } else { //amount > floating.size
         val (extraFloating, remainingDrawPile) = drawPile.splitAt(amount - floating.size)
         copy(floating = floating ++ extraFloating, drawPile = remainingDrawPile)
       }
-    } else if (drawPile.size >= amount) {
+    } else if drawPile.size >= amount then {
       val (drawn, remainingDrawPile) = drawPile.splitAt(amount)
       copy(drawPile = remainingDrawPile, floating = drawn)
     } else {
@@ -43,7 +43,7 @@ case class Policies(
 
   def discardPolicy(policy: Policy): Policies = discardPolicies(policy)
 
-  def discardAll: Policies = discardPolicies(floating: _*)
+  def discardAll: Policies = discardPolicies(floating *)
 
   def enact(policy: Policy): Policies = copy(enacted = enacted.enact(policy))
 }

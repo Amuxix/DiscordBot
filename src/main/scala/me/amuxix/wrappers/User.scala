@@ -3,10 +3,10 @@ package me.amuxix.wrappers
 import java.net.URL
 
 import cats.effect.IO
-import me.amuxix.syntax.action._
-import net.dv8tion.jda.api.entities.{User => JDAUser}
+import me.amuxix.syntax.action.*
+import net.dv8tion.jda.api.entities.User as JDAUser
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 class User(private[wrappers] val user: JDAUser) {
   lazy val id: Long = user.getIdLong
@@ -35,7 +35,7 @@ class User(private[wrappers] val user: JDAUser) {
 
   override def equals(other: Any): Boolean = other match {
     case that: User =>
-      (that canEqual this) &&
+      that.canEqual(this) &&
         id == that.id
     case _ => false
   }

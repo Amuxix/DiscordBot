@@ -1,9 +1,9 @@
 package me.amuxix.commands
 
 import cats.effect.IO
-import cats.syntax.foldable._
+import cats.syntax.foldable.*
 import me.amuxix.wrappers.MessageEvent
-import me.amuxix.syntax.all._
+import me.amuxix.syntax.all.*
 import me.amuxix.Bot.userMap
 
 import scala.util.matching.Regex
@@ -17,7 +17,7 @@ object Mute extends TextCommand {
         println(s"Muting $id")
         event.jda.getUserByID(id.toLong).flatMap { user =>
           println(s"Muting ${user.name}")
-          if (!user.isBot) user.member.traverse_(_.toggleMute).as(true) else IO.pure(false)
+          if !user.isBot then user.member.traverse_(_.toggleMute).as(true) else IO.pure(false)
         }
       case _ => IO.pure(false)
     }

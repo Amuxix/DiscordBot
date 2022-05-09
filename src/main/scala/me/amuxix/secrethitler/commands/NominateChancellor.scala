@@ -4,7 +4,7 @@ import cats.effect.IO
 import me.amuxix.Bot.userMap
 import me.amuxix.commands.Command
 import me.amuxix.secrethitler.{Game, GameBeforeNomination}
-import me.amuxix.syntax.all._
+import me.amuxix.syntax.all.*
 import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex

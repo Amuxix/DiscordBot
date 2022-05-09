@@ -3,7 +3,7 @@ package me.amuxix.commands
 import cats.effect.IO
 import me.amuxix.Bot
 import me.amuxix.wrappers.MessageEvent
-import me.amuxix.syntax.all._
+import me.amuxix.syntax.all.*
 
 import scala.util.matching.Regex
 
@@ -11,7 +11,7 @@ object TakeOver extends TextCommand {
   override def pattern: Regex = "^take over$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
-    for {
+    for
       leader <- Bot.muteLeader.get
       update <- leader match {
         case Some((id, _)) if id != event.author.id =>
@@ -22,7 +22,7 @@ object TakeOver extends TextCommand {
         case o => IO.pure(o)
       }
       _ <- Bot.muteLeader.set(update)
-    } yield true
+    yield true
 
   override val description: String = "Takes over the follow mute."
 }

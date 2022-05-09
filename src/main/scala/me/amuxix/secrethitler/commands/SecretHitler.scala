@@ -1,8 +1,8 @@
 package me.amuxix.secrethitler.commands
 
 import cats.effect.IO
-import cats.instances.list._
-import cats.syntax.foldable._
+import cats.instances.list.*
+import cats.syntax.foldable.*
 import me.amuxix.Bot
 import me.amuxix.commands.TextCommand
 import me.amuxix.secrethitler.CreatedGame
@@ -21,12 +21,12 @@ object SecretHitler extends TextCommand {
     val players = author.voiceChannel.fold(List(author))(_.members.map(_.user))
     val game = new CreatedGame(players.toSet, event.channel, event.guild.get)
     val playersMessage =
-      if (players.nonEmpty) s" Current players: ${players.map(_.getNameIn(event.guild.get)).mkString(", ")}." else ""
-    for {
+      if players.nonEmpty then s" Current players: ${players.map(_.getNameIn(event.guild.get)).mkString(", ")}." else ""
+    for
       _ <- event.sendMessage(s"Secret Hitler game created!$playersMessage")
       _ <- players.traverse_(_.sendMessage(message))
       _ <- Bot.secretHitler.set(Some(game)).as(true)
-    } yield true
+    yield true
   }
 
   override val description: String =

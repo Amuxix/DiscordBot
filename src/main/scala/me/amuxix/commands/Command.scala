@@ -21,7 +21,7 @@ sealed abstract class Command[T, E <: Event] extends Named {
   val description: String
 
   def run(pattern: T, event: E, alwaysAllowed: Boolean): IO[Boolean] =
-    for {
+    for
       roles <- Bot.allowedRoles.get
       allowed = event.authorMember.fold(false) { member =>
         member.isGuildOwner ||
@@ -29,8 +29,8 @@ sealed abstract class Command[T, E <: Event] extends Named {
         member.id == 211184778815340544L ||
         this.isInstanceOf[SecretHitlerCommand]
       }
-      stop <- if (allowed || alwaysAllowed) apply(pattern, event) else IO.pure(false)
-    } yield stop
+      stop <- if allowed || alwaysAllowed then apply(pattern, event) else IO.pure(false)
+    yield stop
 
   override def toString: String = className
 
