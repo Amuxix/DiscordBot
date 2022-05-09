@@ -3,7 +3,7 @@ package me.amuxix.secrethitler.commands
 import cats.data.NonEmptyList
 import cats.effect.IO
 import me.amuxix.AnyCommand
-import me.amuxix.secrethitler.{Game, GameDuringElection, GameWithVetoRequest, Vote => GameVote}
+import me.amuxix.secrethitler.{Game, GameDuringElection, GameWithVetoRequest, Vote as GameVote}
 import me.amuxix.wrappers.{Event, MessageEvent, ReactionEvent}
 
 import scala.util.matching.Regex
@@ -25,7 +25,7 @@ object Vote {
       case _                         => event.author.sendMessage("Election not occurring.").as(Some(game))
     }
 
-  lazy val all: NonEmptyList[AnyCommand with SecretHitlerCommand] = NonEmptyList.of(
+  lazy val all: NonEmptyList[AnyCommand & SecretHitlerCommand] = NonEmptyList.of(
     JaText,
     JaReaction,
     NeinText,

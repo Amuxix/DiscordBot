@@ -1,5 +1,5 @@
 package me.amuxix
 
 object Utils {
-  def isOrAre(t: Iterable[_]): String = if (t.size == 1) "is" else "are"
+  def isOrAre(t: Iterable[?]): String = if t.size == 1 then "is" else "are"
 }

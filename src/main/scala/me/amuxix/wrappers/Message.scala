@@ -1,10 +1,10 @@
 package me.amuxix.wrappers
 
 import cats.effect.IO
-import me.amuxix.syntax.action._
-import cats.instances.list._
-import cats.syntax.foldable._
-import net.dv8tion.jda.api.entities.{Message => JDAMessage}
+import me.amuxix.syntax.action.*
+import cats.instances.list.*
+import cats.syntax.foldable.*
+import net.dv8tion.jda.api.entities.Message as JDAMessage
 
 class Message(message: JDAMessage) {
   lazy val content: String = message.getContentRaw

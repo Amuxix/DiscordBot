@@ -1,13 +1,12 @@
 package me.amuxix.syntax
 
-import cats.effect.IO
-import cats.effect.concurrent.Ref
+import cats.effect.{IO, Ref}
 import me.amuxix.wrappers.{Channel, Role, User}
-import me.amuxix.syntax.action._
+import me.amuxix.syntax.action.*
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Activity
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 trait JDASyntax {
   @inline implicit final def jdaOps(jda: JDA): JDAOps = new JDAOps(jda)
@@ -18,22 +17,22 @@ final class JDAOps(private val jda: JDA) extends AnyVal {
   def getUserByID(id: Long)(implicit userMap: Ref[IO, Map[Long, User]]): IO[User] =
     userMap.get.flatMap {
       _.get(id).fold {
-        for {
+        for
           jdaUser <- jda.retrieveUserById(id).toIO
           user = new User(jdaUser)
           _ <- userMap.update(_ + (id -> user))
-        } yield user
+        yield user
       }(role => IO.pure(role))
     }
 
   def getRoleByID(id: Long)(implicit roleMap: Ref[IO, Map[Long, Role]]): IO[Option[Role]] =
     roleMap.get.flatMap {
       _.get(id).fold {
-        for {
+        for
           jdaRole <- IO(Option(jda.getRoleById(id)))
           role = jdaRole.map(new Role(_))
           _ <- role.fold(IO.unit)(role => roleMap.update(_ + (id -> role)))
-        } yield role
+        yield role
       }(role => IO.pure(Some(role)))
     }
 

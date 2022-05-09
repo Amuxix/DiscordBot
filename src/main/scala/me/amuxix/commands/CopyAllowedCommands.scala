@@ -2,7 +2,7 @@ package me.amuxix.commands
 
 import cats.effect.IO
 import me.amuxix.{AnyCommand, Bot, Persistence}
-import me.amuxix.syntax.all._
+import me.amuxix.syntax.all.*
 import me.amuxix.wrappers.MessageEvent
 
 import scala.util.Try
@@ -19,14 +19,14 @@ object CopyAllowedCommands extends TextCommand {
           .flatMap {
             case None => event.sendMessage(s"Could not find channel with provided name or ID.")
             case Some(channel) =>
-              for {
+              for
                 _ <- Bot.enabledCommands.update { enabledCommands =>
                   val option = enabledCommands.get(channel.id)
                   enabledCommands + option.fold(event.channel.id -> Set.empty[AnyCommand])(event.channel.id -> _)
                 }
                 _ <- event.sendMessage(s"Copy successful.")
                 _ <- Persistence.saveEnabledCommands
-              } yield ()
+              yield ()
           }
           .as(true)
       case _ => IO.pure(false)

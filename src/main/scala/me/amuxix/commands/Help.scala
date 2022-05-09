@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.effect.IO
 import me.amuxix.{AnyCommand, Bot}
 import me.amuxix.wrappers.MessageEvent
-import me.amuxix.syntax.all._
+import me.amuxix.syntax.all.*
 
 import scala.util.matching.Regex
 
@@ -25,12 +25,12 @@ object Help extends TextCommand {
   }
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
-    for {
+    for
       enabledCommands <- Bot.enabledCommands(event.channel)
       enabledCommandHelp = commandHelp(enabledCommands, _)
       message = Bot.allCommands.filter(!_.isInstanceOf[Hidden]).map(enabledCommandHelp).mkString("\n")
       _ <- event.sendMessage(message)
-    } yield true
+    yield true
 
   override val description: String = "Show all existing commands and their descriptions"
 }

@@ -1,8 +1,8 @@
 package me.amuxix.wrappers
 
 import cats.effect.IO
-import me.amuxix.syntax.all._
-import net.dv8tion.jda.api.entities.{MessageChannel, Member => JDAMember, User => JDAUser, Guild => JDAGuild}
+import me.amuxix.syntax.all.*
+import net.dv8tion.jda.api.entities.{MessageChannel, Member as JDAMember, User as JDAUser, Guild as JDAGuild}
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.priv.react.PrivateMessageReactionAddEvent
 
@@ -18,10 +18,10 @@ class ReactionEvent(
   lazy val content: String = emoji
 
   def addReaction(emoji: String): IO[Unit] =
-    for {
+    for
       message <- jdaChannel.retrieveMessageById(messageID).toIO
       _ <- message.addReaction(emoji).toIO
-    } yield ()
+    yield ()
 }
 
 object ReactionEvent {

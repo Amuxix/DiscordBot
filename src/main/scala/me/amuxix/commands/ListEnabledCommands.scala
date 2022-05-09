@@ -10,11 +10,11 @@ object ListEnabledCommands extends TextCommand with Hidden {
   override def pattern: Regex = "^list enabled commands$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
-    for {
+    for
       enabledCommands <- Bot.enabledCommands.get
       channelCommands = enabledCommands.getOrElse(event.channel.id, Set.empty)
       _ <- event.sendMessage(s"Enabled commands: ${channelCommands.mkString(", ")}")
-    } yield true
+    yield true
 
   override val description: String = "Lists all enabled commands."
 }

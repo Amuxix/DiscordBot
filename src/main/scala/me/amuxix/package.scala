@@ -4,5 +4,5 @@ import me.amuxix.commands.Command
 import me.amuxix.wrappers.Event
 
 package object amuxix {
-  type AnyCommand = Command[_, _ <: Event]
+  type AnyCommand = Command[?, ? <: Event]
 }

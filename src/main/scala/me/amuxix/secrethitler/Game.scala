@@ -1,14 +1,14 @@
 package me.amuxix.secrethitler
 
 import cats.effect.IO
-import cats.instances.list._
-import cats.syntax.foldable._
-import cats.syntax.option._
+import cats.instances.list.*
+import cats.syntax.foldable.*
+import cats.syntax.option.*
 import me.amuxix.secrethitler.Game.{PolicyEffects, fascistPoliciesToWin, hitlerElectionWinPoliciesNeeded, liberalPoliciesToWin}
-import me.amuxix.secrethitler.{Vote => GameVote}
+import me.amuxix.secrethitler.Vote as GameVote
 import me.amuxix.secrethitler.Vote.Vote
-import me.amuxix.secrethitler.commands._
-import me.amuxix.secrethitler.commands.policies._
+import me.amuxix.secrethitler.commands.*
+import me.amuxix.secrethitler.commands.policies.*
 import me.amuxix.wrappers.{Channel, Guild, User}
 
 import scala.util.Random
@@ -24,7 +24,7 @@ object Game {
 
   def revealTopCards(game: StartedGame): IO[GameBeforeNomination] = {
     val policies = game.policies.drawPolicies()
-    for {
+    for
       _ <- game.president.sendMessage(
         s"The next 3 cards are ${policies.floating.mkString(" -> ")}.",
       )
@@ -32,7 +32,7 @@ object Game {
       _ <- game.channel.sendMessage("The president has seen the top 3 cards.")
       president = game.president.next(game.playerList)
       _ <- game.announceNextPresident(president)
-    } yield new GameBeforeNomination(
+    yield new GameBeforeNomination(
       game.guild,
       game.channel,
       game.policyEffects,
@@ -47,11 +47,11 @@ object Game {
   }
 
   def kill(game: StartedGame): IO[WaitingForPolicyResolution] =
-    for {
+    for
       _ <- game.channel.sendMessage(
         s"${game.president.mention} must select the target to kill by writing, `kill <name, id or mention>`.",
       )
-    } yield new WaitingForPolicyResolution(
+    yield new WaitingForPolicyResolution(
       game.guild,
       game.channel,
       game.policyEffects,
@@ -65,11 +65,11 @@ object Game {
     )
 
   def investigate(game: StartedGame): IO[WaitingForPolicyResolution] =
-    for {
+    for
       _ <- game.channel.sendMessage(
         s"${game.president.mention} must select the target to investigate by writing, `investigate <name, id or mention>`.",
       )
-    } yield new WaitingForPolicyResolution(
+    yield new WaitingForPolicyResolution(
       game.guild,
       game.channel,
       game.policyEffects,
@@ -83,13 +83,13 @@ object Game {
     )
 
   def selectNextPresident(game: StartedGame): IO[WaitingForPolicyResolution] =
-    for {
+    for
       _ <- game.president.sendMessage(
         s"Please select the next president by writing, `investigate <name, id or mention>`. You can choose your self.",
       )
 
       _ <- game.channel.sendMessage("The president will select the next president.")
-    } yield new WaitingForPolicyResolution(
+    yield new WaitingForPolicyResolution(
       game.guild,
       game.channel,
       game.policyEffects,
@@ -158,7 +158,7 @@ class CreatedGame(val players: Set[User], val channel: Channel, val guild: Guild
   private lazy val hitlerKnows: Boolean = players.size < 7
 
   private lazy val hitlerIsKnowMessage: String = {
-    val knows = if (hitlerKnows) "knows" else "doesn't know"
+    val knows = if hitlerKnows then "knows" else "doesn't know"
     s"Hitler $knows who the fascists are"
   }
 
@@ -173,7 +173,7 @@ class CreatedGame(val players: Set[User], val channel: Channel, val guild: Guild
     val numberOfFascists = (players.size - 1) / 2
     val shuffled = Random.shuffle(players.toList)
     val (allFascists, liberals) = shuffled.splitAt(numberOfFascists)
-    val hitler :: fascists = allFascists
+    val hitler :: fascists = allFascists: @unchecked
     val playersWithRoles: List[(User, Role)] =
       liberals.map(_ -> Liberal) ++ fascists.map(_ -> Fascist) :+ (hitler -> Hitler)
 
@@ -181,7 +181,7 @@ class CreatedGame(val players: Set[User], val channel: Channel, val guild: Guild
     val playersShuffled = playersWithRolesShuffled.map(_._1)
     val president = new President(playersShuffled.head)
 
-    for {
+    for
       _ <- channel.sendMessage(
         s"Game starting there are ${allFascists.size} fascists, ${liberals.size} liberals and $hitlerIsKnowMessage.",
       )
@@ -193,12 +193,12 @@ class CreatedGame(val players: Set[User], val channel: Channel, val guild: Guild
       _ <- playersWithRoles.toMap.view
         .mapValues {
           case `Hitler` if hitlerKnows =>
-            val isOrAre = if (allFascists.size == 1) "fascist is" else "fascists are"
+            val isOrAre = if allFascists.size == 1 then "fascist is" else "fascists are"
             s"You are the Secret Hitler this game, the $isOrAre ${fascists.map(_.name).mkString(", ")}."
           case `Hitler` =>
             s"You are the Secret Hitler this game."
           case `Fascist` =>
-            val isOrAre = if (allFascists.size == 1) "fascist is" else "fascists are"
+            val isOrAre = if allFascists.size == 1 then "fascist is" else "fascists are"
             s"You are a Fascist this game. ${hitler.name} is the Secret Hitler, the $isOrAre ${fascists.map(_.name).mkString(", ")}."
           case `Liberal` =>
             s"You are a Liberal this game."
@@ -207,7 +207,7 @@ class CreatedGame(val players: Set[User], val channel: Channel, val guild: Guild
         .traverse_ { case (player, message) =>
           player.sendMessage(message)
         }
-    } yield new GameBeforeNomination(
+    yield new GameBeforeNomination(
       guild,
       channel,
       policyEffects,
@@ -265,22 +265,22 @@ sealed trait Finishable { this: StartedGame =>
     */
   def attemptToFinishGame(currentChancellor: Option[User]): IO[Option[StartedGame]] = {
     def hitlerWasElected(hitler: Option[User], currentChancellor: Option[User]) =
-      (for {
+      (for
         currentChancellor <- currentChancellor
         hitler <- hitler
-      } yield currentChancellor == hitler).getOrElse(false)
+      yield currentChancellor == hitler).getOrElse(false)
 
     lazy val hitler: Option[User] = roles.collectFirst { case (user, `Hitler`) =>
       user
     }
 
-    if (policies.enacted.fascist >= hitlerElectionWinPoliciesNeeded && hitlerWasElected(hitler, currentChancellor)) {
+    if policies.enacted.fascist >= hitlerElectionWinPoliciesNeeded && hitlerWasElected(hitler, currentChancellor) then {
       channel.sendMessage("Hitler was elected chancellor! Fascists win!").as(None)
-    } else if (policies.enacted.fascist == fascistPoliciesToWin) {
+    } else if policies.enacted.fascist == fascistPoliciesToWin then {
       channel.sendMessage(s"All $fascistPoliciesToWin fascist policies were enacted! Fascists win!").as(None)
-    } else if (policies.enacted.liberal == liberalPoliciesToWin) {
+    } else if policies.enacted.liberal == liberalPoliciesToWin then {
       channel.sendMessage(s"All $liberalPoliciesToWin liberal policies were enacted! Liberals win!").as(None)
-    } else if (hitler.isEmpty) {
+    } else if hitler.isEmpty then {
       channel.sendMessage(s"Hilter has been killed! Liberals win!").as(None)
     } else {
       IO.pure(Some(this))
@@ -295,19 +295,19 @@ sealed trait Updateable[+B <: StartedGame] { this: StartedGame =>
 
   protected def enactPolicy(policy: Policy, doEffects: Boolean): IO[StartedGame] = {
     val game = withPolicies(policies.enact(policy))
-    for {
+    for
       _ <- channel.sendMessage(s"A $policy policy has been enacted!")
       _ <- channel.sendMessage(
         s"${game.policies.enacted.liberal} Liberal and ${game.policies.enacted.fascist} Fascist policies have been enacted, in total.",
       )
 
       gameWithEffects <-
-        if (doEffects) {
+        if doEffects then {
           game.policyEffects.get(game.policies.enacted.fascist).fold[IO[StartedGame]](game.nextRound)(_(game))
         } else {
           game.nextRound
         }
-    } yield gameWithEffects
+    yield gameWithEffects
   }
 
   //Set failedElections to 0
@@ -349,10 +349,10 @@ class GameBeforeNomination(
     case candidate if !players.contains(candidate) =>
       channel.sendMessage(s"${candidate.name} is not playing!").as(this.some)
     case candidate =>
-      for {
+      for
         message <- channel.sendMessage(s"${candidate.name} has been nominated for chancellor cast your votes now!")
-        _ <- message.addReactions("✅", "❎")
-      } yield withCandidate(candidate).some
+        _ <- message.addReactions("?", "?")
+      yield withCandidate(candidate).some
   }
 
   private def withCandidate(candidate: User): GameDuringElection =
@@ -438,7 +438,7 @@ class GameDuringElection(
     )
 
   private def addVote(user: User, vote: Vote): IO[Map[User, Vote]] =
-    if (votes.contains(user)) {
+    if votes.contains(user) then {
       user.sendMessage("You already voted, your vote remains unchanged.").as(votes)
     } else {
       IO.pure(votes + (user -> vote))
@@ -458,7 +458,7 @@ class GameDuringElection(
     )
 
   private lazy val passVote: IO[Option[StartedGame]] =
-    for {
+    for
       _ <- channel.sendMessage(
         //s"${candidate.mention} has been elected Chancellor. ${president.mention} please check your private messages.",
         s"${candidate.mention} has been elected Chancellor.",
@@ -480,13 +480,13 @@ class GameDuringElection(
       _ <- checkedGame.fold(IO.unit) { _ =>
         val message =
           s"You drew the following policies: ${updatedPolicies.floating.mkString(", ")}. Use the reactions below to choose which to **discard**."
-        for {
+        for
           message <- president.sendMessage(message)
           emotes = updatedPolicies.floating.distinct.map(_.emote)
-          _ <- message.addReactions(emotes: _*)
-        } yield ()
+          _ <- message.addReactions(emotes *)
+        yield ()
       }
-    } yield checkedGame
+    yield checkedGame
 
   private lazy val failVote: IO[Option[StartedGame]] = {
     lazy val nextPresident = president.next(playerList)
@@ -504,7 +504,7 @@ class GameDuringElection(
         val updatedPolicies = policies.drawPolicies(1)
         val policy = updatedPolicies.floating.head
         val message = s"Vote failed for 3rd time in a row. $policy policy was enacted."
-        val game = for {
+        val game = for
           game <- enactPolicy(policy, doEffects = false) //This selects the next president
           beforeNomination = new GameBeforeNomination(
             game.guild,
@@ -518,14 +518,14 @@ class GameDuringElection(
             game.vetoUnlocked,
           )
           updatedGame <- beforeNomination.attemptToFinishGame(None)
-        } yield updatedGame
+        yield updatedGame
 
         (message, game)
     }
-    for {
+    for
       _ <- channel.sendMessage(message)
       game <- game
-    } yield game
+    yield game
   }
 
   private def withVotes(votes: Map[User, Vote]): GameDuringElection =
@@ -544,19 +544,19 @@ class GameDuringElection(
     )
 
   def vote(user: User, vote: Vote): IO[Option[StartedGame]] =
-    for {
+    for
       votes <- addVote(user, vote)
       votePassed = votes.values.count(_ == GameVote.Ja) > players.size / 2
       voteFailed = votes.values.count(_ == GameVote.Nein) >= players.size / 2f
       game <-
-        if (votePassed) {
+        if votePassed then {
           passVote
-        } else if (voteFailed) {
+        } else if voteFailed then {
           failVote
         } else {
           IO.pure(Some(withVotes(votes)))
         }
-    } yield game
+    yield game
 }
 
 class GameWithChancellorElected(
@@ -586,21 +586,21 @@ class GameWithChancellorElected(
   ).withDefaultValue(Set.empty)
 
   def discardPolicy(policy: Policy): IO[Option[StartedGame]] =
-    if (!policies.floating.contains(policy)) {
+    if !policies.floating.contains(policy) then {
       president.sendMessage("You cannot discard what you do not have!").as(this.some)
     } else {
       val updatedPolicies = policies.discardPolicy(policy)
       val vetoMessage =
-        if (vetoUnlocked) " Veto power has been unlocked you can propose a veto by saying `I wish to veto this agenda`."
+        if vetoUnlocked then " Veto power has been unlocked you can propose a veto by saying `I wish to veto this agenda`."
         else ""
-      for {
+      for
         message <- chancellor.sendMessage(
           s"The president has given you the following policies: ${updatedPolicies.floating.mkString(", ")}. Use the reactions below to choose which to **enact**.$vetoMessage",
         )
         emotes = updatedPolicies.floating.distinct.map(_.emote)
-        _ <- message.addReactions(emotes: _*)
+        _ <- message.addReactions(emotes *)
         _ <- emotes.traverse_(e => message.addReaction(e))
-      } yield new GameWaitingForChancellorDecision(
+      yield new GameWaitingForChancellorDecision(
         guild,
         channel,
         policyEffects,
@@ -639,7 +639,7 @@ class GameWaitingForChancellorDecision(
     with Updateable[GameWaitingForChancellorDecision] {
 
   override def availableCommands: Map[User, Set[SecretHitlerCommand]] =
-    (if (vetoUnlocked && !vetoDenied) {
+    (if vetoUnlocked && !vetoDenied then {
        Map[User, Set[SecretHitlerCommand]](chancellor -> Set(Enact, PickFascist, PickLiberal, Veto))
      } else {
        Map[User, Set[SecretHitlerCommand]](chancellor -> Set(Enact, PickFascist, PickLiberal))
@@ -692,10 +692,10 @@ class GameWaitingForChancellorDecision(
     enactPolicy(policy, doEffects = true).flatMap(_.attemptToFinishGame(None))
 
   lazy val veto: IO[Option[GameWithVetoRequest]] =
-    for {
+    for
       message <- president.sendMessage("The chancellor has requested a veto, do you accept?")
-      _ <- message.addReactions("✅", "❎")
-    } yield new GameWithVetoRequest(
+      _ <- message.addReactions("?", "?")
+    yield new GameWithVetoRequest(
       guild,
       channel,
       policyEffects,
@@ -735,11 +735,11 @@ class GameWithVetoRequest(
     Map[User, Set[SecretHitlerCommand]](president.current -> Vote.all.toList.toSet).withDefaultValue(Set.empty)
 
   def accept: IO[Option[GameBeforeNomination]] =
-    for {
+    for
       _ <- channel.sendMessage("The current agenda was vetoed.")
       nextPresident = president.next(playerList)
       _ <- announceNextPresident(nextPresident)
-    } yield new GameBeforeNomination(
+    yield new GameBeforeNomination(
       guild,
       channel,
       policyEffects,
@@ -752,9 +752,9 @@ class GameWithVetoRequest(
     ).some
 
   def deny: IO[Option[GameWaitingForChancellorDecision]] =
-    for {
+    for
       _ <- channel.sendMessage("The veto was refused.")
-    } yield new GameWaitingForChancellorDecision(
+    yield new GameWaitingForChancellorDecision(
       guild,
       channel,
       policyEffects,
@@ -835,7 +835,7 @@ class WaitingForPolicyResolution(
     )
 
   def kill(target: User): IO[Option[StartedGame]] =
-    for {
+    for
       _ <- channel.sendMessage(s"${target.name} was killed!")
       filteredRoles = roles.filter {
         case (user, _) if user == target => false
@@ -845,14 +845,14 @@ class WaitingForPolicyResolution(
       president = this.president.next(filteredRoles.map(_._1))
       game <- withRoles(filteredRoles, president).attemptToFinishGame(None)
       _ <- game.fold(IO.unit)(_.announceNextPresident(president))
-    } yield game
+    yield game
 
   def investigate(target: User): IO[Option[GameBeforeNomination]] =
-    for {
+    for
       _ <- president.sendMessage(s"${target.name} is a ${roleMap(target).role}")
       president = this.president.next(this.playerList)
       _ <- announceNextPresident(president)
-    } yield new GameBeforeNomination(
+    yield new GameBeforeNomination(
       guild,
       channel,
       policyEffects,

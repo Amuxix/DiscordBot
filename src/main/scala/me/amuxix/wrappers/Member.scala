@@ -1,10 +1,10 @@
 package me.amuxix.wrappers
 
 import cats.effect.IO
-import me.amuxix.syntax.action._
-import net.dv8tion.jda.api.entities.{Member => JDAMember}
+import me.amuxix.syntax.action.*
+import net.dv8tion.jda.api.entities.Member as JDAMember
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 class Member(member: JDAMember) {
   lazy val id: Long = member.getIdLong

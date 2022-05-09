@@ -14,7 +14,7 @@ trait SecretHitlerTextCommand extends TextCommand with SecretHitlerCommand {
   protected def secretHitlerCommand(regex: Regex, event: MessageEvent, game: Game): IO[Option[Game]]
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
-    for {
+    for
       game <- Bot.secretHitler.get
       player = event.author
       executed <- game
@@ -24,12 +24,12 @@ trait SecretHitlerTextCommand extends TextCommand with SecretHitlerCommand {
           filter
         }
         .fold(IO.pure(false)) { game =>
-          for {
+          for
             updatedGame <- secretHitlerCommand(regex, event, game)
             _ <- Bot.secretHitler.set(updatedGame)
-          } yield true
+          yield true
         }
-    } yield executed
+    yield executed
 
   override val description: String = ""
 }
@@ -38,18 +38,18 @@ trait SecretHitlerReactionCommand extends ReactionCommand with SecretHitlerComma
   protected def secretHitlerCommand(emoji: String, event: ReactionEvent, game: Game): IO[Option[Game]]
 
   override protected def apply(emoji: String, event: ReactionEvent): IO[Boolean] =
-    for {
+    for
       game <- Bot.secretHitler.get
       player = event.author
       executed <- game
         .filter(game => game.isPlaying(player) && game.availableCommands(event.author).contains(this))
         .fold(IO.pure(false)) { game =>
-          for {
+          for
             updatedGame <- secretHitlerCommand(emoji, event, game)
             _ <- Bot.secretHitler.set(updatedGame)
-          } yield true
+          yield true
         }
-    } yield executed
+    yield executed
 
   override val description: String = ""
 }

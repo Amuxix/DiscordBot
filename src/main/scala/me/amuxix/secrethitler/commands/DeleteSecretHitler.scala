@@ -11,12 +11,12 @@ object DeleteSecretHitler extends TextCommand {
   override def pattern: Regex = "^delete secret hitler$".r
 
   override protected def apply(pattern: Regex, event: MessageEvent): IO[Boolean] =
-    for {
+    for
       game <- Bot.secretHitler.get
       message = game.fold("No game running!")(_ => "Game deleted")
       _ <- Bot.secretHitler.set(None)
       _ <- event.sendMessage(message)
-    } yield true
+    yield true
 
   override val description: String = "Allows the deletion of a secret hitler game."
 }

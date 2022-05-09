@@ -3,7 +3,7 @@ package me.amuxix.wrappers
 import java.io.File
 
 import cats.effect.IO
-import me.amuxix.syntax.action._
+import me.amuxix.syntax.action.*
 import net.dv8tion.jda.api.entities.MessageChannel
 
 class Channel(channel: MessageChannel) {

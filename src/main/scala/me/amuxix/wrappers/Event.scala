@@ -4,7 +4,7 @@ import java.io.File
 
 import cats.effect.IO
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.{MessageChannel, Member => JDAMember, User => JDAUser, Guild => JDAGuild}
+import net.dv8tion.jda.api.entities.{MessageChannel, Member as JDAMember, User as JDAUser, Guild as JDAGuild}
 
 abstract class Event(
   jdaChannel: MessageChannel,
