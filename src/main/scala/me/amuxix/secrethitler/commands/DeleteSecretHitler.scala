@@ -7,7 +7,7 @@ import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
-object DeleteSecretHitler extends TextCommand {
+object DeleteSecretHitler extends TextCommand:
   override def pattern: Regex = "^delete secret hitler$".r
 
   override protected def apply(pattern: Regex, event: MessageEvent): IO[Boolean] =
@@ -19,4 +19,3 @@ object DeleteSecretHitler extends TextCommand {
     yield true
 
   override val description: String = "Allows the deletion of a secret hitler game."
-}

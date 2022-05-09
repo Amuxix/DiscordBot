@@ -7,13 +7,13 @@ import me.amuxix.syntax.all.*
 
 import scala.util.matching.Regex
 
-object FollowMute extends TextCommand {
+object FollowMute extends TextCommand:
   override def pattern: Regex = "^(?:un)?follow mute$".r
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
     for
       leader <- muteLeader.get
-      update <- leader match {
+      update <- leader match
         case Some((id, _)) if id == event.author.id =>
           event.jda.clearActivity()
           event.sendMessage(s"Stopped following ${event.authorName}.").as(None)
@@ -25,10 +25,8 @@ object FollowMute extends TextCommand {
             following <- event.jda.getUserByID(id)
             _ <- event.sendMessage(s"Already following ${following.name}.")
           yield some
-      }
       _ <- muteLeader.set(update)
     yield true
 
   override val description: String =
     "Will mute everyone in your voice chat until you call this command again or some takes over"
-}

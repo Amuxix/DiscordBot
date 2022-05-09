@@ -9,17 +9,14 @@ import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
-object NominateChancellor extends SecretHitlerTextCommand {
+object NominateChancellor extends SecretHitlerTextCommand:
   override def pattern: Regex = s"^nominate ${Command.userID}$$".r
 
   override protected def secretHitlerCommand(regex: Regex, event: MessageEvent, game: Game): IO[Option[Game]] =
-    event.content.toLowerCase match {
+    event.content.toLowerCase match
       case regex(id) =>
         event.jda.getUserByID(id.toLong).flatMap { user =>
-          game match {
+          game match
             case game: GameBeforeNomination => game.nominateChancellor(user)
             case _                          => IO.pure(Some(game))
-          }
         }
-    }
-}

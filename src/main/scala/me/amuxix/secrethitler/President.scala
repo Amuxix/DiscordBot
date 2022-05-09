@@ -6,7 +6,7 @@ import me.amuxix.wrappers.{Message, User}
 class President(
   president: User,
   overriden: Option[User] = None,
-) {
+):
   lazy val current: User = overriden.getOrElse(president)
   lazy val name: String = current.name
   lazy val mention: String = current.mention
@@ -16,4 +16,3 @@ class President(
 
   def next(playerList: List[User]): President =
     new President(playerList((playerList.indexOf(president) + 1) % playerList.size))
-}

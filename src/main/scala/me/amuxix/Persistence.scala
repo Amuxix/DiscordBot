@@ -9,7 +9,7 @@ import me.amuxix.Bot.{allCommands, allowedRoles, enabledCommands}
 
 import scala.jdk.CollectionConverters.*
 
-object Persistence {
+object Persistence:
   val fileFolder = new File("data")
   val replacementsFile = new File(fileFolder, "replacements.txt")
   val allowedRolesFile = new File(fileFolder, "allowedRoles.txt")
@@ -24,16 +24,15 @@ object Persistence {
     yield ()
 
   private def load[T](file: File, ref: Ref[IO, T])(f: List[String] => T): IO[Unit] =
-    if file.exists() then {
+    if file.exists() then
       for
         loaded <- Resource.fromAutoCloseable(IO(new BufferedReader(new FileReader(file)))).use { reader =>
           IO(reader.lines().iterator().asScala.toList).map(f)
         }
         _ <- ref.set(loaded)
       yield ()
-    } else {
+    else
       IO.unit
-    }
 
   val saveAllowedRoles: IO[Unit] = save(allowedRolesFile, allowedRoles)(_.toList.map(_.toString))
 
@@ -50,4 +49,3 @@ object Persistence {
       val commands = tail.flatMap(commandName => allCommands.find(_.className.equalsIgnoreCase(commandName))).toSet
       Some(channel.toLong -> commands)
   }).toMap)
-}

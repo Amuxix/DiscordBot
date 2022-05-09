@@ -15,7 +15,7 @@ import net.dv8tion.jda.api.{JDA, JDABuilder}
 
 import scala.concurrent.duration.*
 
-object Bot extends IOApp {
+object Bot extends IOApp:
   lazy val config = Configuration.fromConfig()
 
   given userMap: Ref[IO, Map[Long, User]] = Ref.unsafe[IO, Map[Long, User]](Map.empty)
@@ -79,10 +79,9 @@ object Bot extends IOApp {
   def enabledCommands(channel: Channel): IO[NonEmptyList[AnyCommand]] =
     enabledCommands.get.map(enabledCommands => alwaysEnabled ++ enabledCommands.getOrElse(channel.id, Set.empty).toList)
 
-  private val jdaIO: IO[JDA] = {
+  private val jdaIO: IO[JDA] =
     val jda = JDABuilder.createDefault(config.token).addEventListeners(MessageListener)
     IO(jda.build().awaitReady())
-  }
 
   def spam(jda: JDA): Stream[IO, Unit] =
     for
@@ -100,23 +99,22 @@ object Bot extends IOApp {
       voiceChannel <- Stream.emits(leader.voiceChannel.toList)
       isSelfMuted <- Stream.emits(leader.isSelfMuted.toList)
       _ <- Stream.eval {
-        if isSelfMuted && !wasSelfMuted then { //Leader muted
+        if isSelfMuted && !wasSelfMuted then //Leader muted
           for
             _ <- voiceChannel.members.parTraverse_(_.mute)
             //role <- jda.getRoleByID(777994095342911519L)
             //_ <- role.fold(IO.unit)(voiceChannel.denyPermission(_, Permission.VOICE_SPEAK))
             _ <- muteLeader.set(Some((leaderID, isSelfMuted)))
           yield ()
-        } else if !isSelfMuted && wasSelfMuted then { //Leader unmuted
+        else if !isSelfMuted && wasSelfMuted then //Leader unmuted
           for
             _ <- voiceChannel.members.parTraverse_(_.unmute)
             //role <- jda.getRoleByID(777994095342911519L)
             //_ <- role.fold(IO.unit)(voiceChannel.allowPermission(_, Permission.VOICE_SPEAK))
             _ <- muteLeader.set(Some((leaderID, isSelfMuted)))
           yield ()
-        } else {
+        else
           IO.unit
-        }
       }
     yield ()
 
@@ -127,4 +125,3 @@ object Bot extends IOApp {
       jda <- Stream.eval(jdaIO)
       _ <- spam(jda).concurrently(followMute(jda))
     yield ()).compile.drain.as(ExitCode.Success)
-}

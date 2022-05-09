@@ -5,10 +5,10 @@ import java.net.URL
 import cats.effect.IO
 import me.amuxix.syntax.action.*
 import net.dv8tion.jda.api.entities.User as JDAUser
-
+import compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 
-class User(private[wrappers] val user: JDAUser) {
+class User(private[wrappers] val user: JDAUser):
   lazy val id: Long = user.getIdLong
   lazy val mention: String = s"<@!$id>"
   lazy val name: String = user.getName
@@ -33,15 +33,12 @@ class User(private[wrappers] val user: JDAUser) {
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[User]
 
-  override def equals(other: Any): Boolean = other match {
+  override def equals(other: Any): Boolean = other.asMatchable match
     case that: User =>
       that.canEqual(this) &&
         id == that.id
     case _ => false
-  }
 
-  override def hashCode(): Int = {
+  override def hashCode(): Int =
     val state = Seq(id)
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-  }
-}

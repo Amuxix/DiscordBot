@@ -8,11 +8,10 @@ import net.dv8tion.jda.api.entities.Activity
 
 import scala.jdk.CollectionConverters.*
 
-trait JDASyntax {
+trait JDASyntax:
   @inline implicit final def jdaOps(jda: JDA): JDAOps = new JDAOps(jda)
-}
 
-final class JDAOps(private val jda: JDA) extends AnyVal {
+final class JDAOps(private val jda: JDA) extends AnyVal:
 
   def getUserByID(id: Long)(implicit userMap: Ref[IO, Map[Long, User]]): IO[User] =
     userMap.get.flatMap {
@@ -48,4 +47,3 @@ final class JDAOps(private val jda: JDA) extends AnyVal {
 
   def channels: List[Channel] = jda.getTextChannels.asScala.toList.map(new Channel(_))
   def findChannel(name: String): Option[Channel] = channels.find(_.name.equalsIgnoreCase(name))
-}

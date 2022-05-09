@@ -9,10 +9,10 @@ javacOptions ++= Seq("-Xlint", "-encoding", "UTF-8")
 scalacOptions ++= Seq(
   "-explain",                          // Explain errors in more detail.
   "-explain-types",                    // Explain type errors in more detail.
-  //"-indent",                           // Allow significant indentation.
+  "-indent",                           // Allow significant indentation.
   "-new-syntax",                       // Require `then` and `do` in control expressions.
   "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
-  //"-source:future",                    // better-monadic-for
+  "-source:future",                    // better-monadic-for
   "-language:implicitConversions",     // Allow implicit conversions
   "-language:higherKinds",             // Allow higher-kinded types
   "-language:postfixOps",              // Explicitly enables the postfix ops feature
@@ -25,8 +25,8 @@ scalacOptions ++= Seq(
   //"-Yretain-trees",                    // Retain trees for top-level classes, accessible from ClassSymbol#tree
   //"-Yexplicit-nulls",                  // Make reference types non-nullable. Nullable types can be expressed with unions: e.g. String|Null.
   //"-Yshow-suppressed-errors",          // Also show follow-on errors and warnings that are normally suppressed.
-  "-rewrite",
-  "-source", "future-migration",
+  //"-rewrite",
+  //"-source", "future-migration",
   //"-migration", "future-migration",
 )
 // format: on

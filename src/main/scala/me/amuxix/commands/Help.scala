@@ -8,21 +8,19 @@ import me.amuxix.syntax.all.*
 
 import scala.util.matching.Regex
 
-object Help extends TextCommand {
+object Help extends TextCommand:
   override def pattern: Regex = "^help$".r
 
-  implicit private class StringOps(string: String) {
+  implicit private class StringOps(string: String):
     def bold: String = s"**$string**"
     def underline: String = s"__${string}__"
-  }
 
-  private def commandHelp(enabledCommands: NonEmptyList[AnyCommand], command: AnyCommand): String = {
+  private def commandHelp(enabledCommands: NonEmptyList[AnyCommand], command: AnyCommand): String =
     val name = command.className
       .when(enabledCommands.toList.contains(command))(_.bold)
       .when(Bot.alwaysEnabled.toList.contains(command))(_.underline)
 
     s"$name(`${command.pattern}`) - ${command.description}"
-  }
 
   override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
     for
@@ -33,4 +31,3 @@ object Help extends TextCommand {
     yield true
 
   override val description: String = "Show all existing commands and their descriptions"
-}
