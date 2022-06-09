@@ -23,8 +23,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASS }}
 
-      - name: Check that workflows are up to date
-        run: sbt Docker / publishLocal
+      - name: Create Dockerfile
+        run: sbt "Docker / publishLocal"
 
       - name: Build and push
         id: docker_build
