@@ -2,7 +2,7 @@ package me.amuxix.commands
 
 import cats.effect.IO
 import me.amuxix.Bot
-import me.amuxix.wrappers.MessageEvent
+import me.amuxix.wrappers.event.MessageEvent
 
 import scala.util.matching.Regex
 
@@ -16,7 +16,7 @@ object StopSpam extends TextCommand with Hidden:
       id = author.id
       stop <-
         if list.contains(id) then
-          IO(println(s"Stopped spamming ${author.name}")) *> Bot.spamList.update(_ - id).as(true)
+          IO.println(s"Stopped spamming ${author.name}") *> Bot.spamList.update(_ - id).as(true)
         else
           IO.pure(false)
     yield stop

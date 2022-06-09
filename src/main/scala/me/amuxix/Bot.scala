@@ -3,12 +3,10 @@ package me.amuxix
 import cats.data.NonEmptyList
 import cats.effect.{ExitCode, IO, IOApp, Ref}
 import cats.syntax.parallel.*
+import cats.syntax.foldable.*
 import fs2.Stream
 import me.amuxix.Persistence.{loadAllowedRoles, loadEnabledCommands}
 import me.amuxix.commands.*
-import me.amuxix.secrethitler.{Game, State}
-import me.amuxix.secrethitler.commands.*
-import me.amuxix.secrethitler.commands.policies.*
 import me.amuxix.syntax.all.*
 import me.amuxix.wrappers.{Channel, Role, User}
 import net.dv8tion.jda.api.{JDA, JDABuilder}
@@ -24,46 +22,25 @@ object Bot extends IOApp:
   val allowedRoles: Ref[IO, Set[Long]] = Ref.unsafe[IO, Set[Long]](Set.empty)
   val muteLeader: Ref[IO, Option[(Long, Boolean)]] = Ref.unsafe[IO, Option[(Long, Boolean)]](Option.empty)
   val replacements: Ref[IO, Map[String, String]] = Ref.unsafe[IO, Map[String, String]](Map.empty)
-  val secretHitler: Ref[IO, Option[Game]] = Ref.unsafe[IO, Option[Game]](None)
 
-  val secretHitlerCommands: NonEmptyList[AnyCommand] =
-    Vote.all `concatNel`
-      NonEmptyList.of(
-        Investigate,
-        Kill,
-        SelectNextPresident,
-        SecretHitler,
-        Enact,
-        JoinGame,
-        LeaveGame,
-        NominateChancellor,
-        StartSecretHitler,
-        Veto,
-        Discard,
-        PickFascist,
-        PickLiberal,
-        State,
-      )
+  val allCommands: NonEmptyList[AnyCommand] = NonEmptyList.of(
+    Help,
+    /*EnableCommand,
+    DisableCommand,
+    EnableAllCommands,
+    DisableAllCommands,
+    FollowMute,
+    TakeOver,
+    Mute,
+    Spam,
+    StopSpam,
+    AllowGroup,
+    CopyAllowedCommands,
+    DisallowGroup,*/
+    Test,
+  )
 
-  val allCommands: NonEmptyList[AnyCommand] =
-    secretHitlerCommands `concatNel`
-      NonEmptyList.of(
-        Help,
-        EnableCommand,
-        DisableCommand,
-        EnableAllCommands,
-        DisableAllCommands,
-        FollowMute,
-        TakeOver,
-        Mute,
-        Spam,
-        StopSpam,
-        AllowGroup,
-        CopyAllowedCommands,
-        DisallowGroup,
-      )
-
-  val alwaysEnabled: NonEmptyList[TextCommand] =
+  val alwaysEnabled: NonEmptyList[AnyCommand] =
     NonEmptyList.of(
       Help,
       EnableCommand,
@@ -72,6 +49,7 @@ object Bot extends IOApp:
       DisableAllCommands,
       StopSpam,
       ListEnabledCommands,
+      Test,
     )
 
   val enabledCommands = Ref.unsafe[IO, Map[Long, Set[AnyCommand]]](Map.empty)
@@ -118,10 +96,22 @@ object Bot extends IOApp:
       }
     yield ()
 
+  def registerSlashCommands(jda: JDA): IO[Unit] =
+    allCommands.collect {
+      case command: SlashCommand =>
+        val data = command.pattern.build.setDefaultEnabled(Bot.alwaysEnabled.toList.contains(command))
+        IO.println(s"""Registering "${data.getName}", enabled? ${data.isDefaultEnabled}""") *> jda.upsertCommand(data).toIO
+    }.sequence_
+
+
   override def run(args: List[String]): IO[ExitCode] =
     (for
       _ <- Stream.eval(loadAllowedRoles)
       _ <- Stream.eval(loadEnabledCommands)
       jda <- Stream.eval(jdaIO)
+      _ <- Stream.eval(registerSlashCommands(jda))
       _ <- spam(jda).concurrently(followMute(jda))
     yield ()).compile.drain.as(ExitCode.Success)
+
+//Add Bot to server
+//https://discord.com/oauth2/authorize?client_id=774637952131006484&scope=bot+applications.commands
