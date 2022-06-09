@@ -17,6 +17,7 @@ scalacOptions ++= Seq(
   "-language:higherKinds",             // Allow higher-kinded types
   "-language:postfixOps",              // Explicitly enables the postfix ops feature
   "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
+  "-Xcheck-macros",
   //"-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
   //"-Xmigration:3.1",                   // Warn about constructs whose behavior may have changed since version.
   //"-Xsemanticdb",                      // Store information in SemanticDB.
@@ -39,8 +40,7 @@ enablePlugins(DockerPlugin)
 val http4sVersion = "1.0.0-M32"
 val circeVersion = "0.14.1"
 libraryDependencies ++= Seq(
-  //"net.dv8tion"            % "JDA"                 % "5.0.0-alpha.11",
-  "net.dv8tion"            % "JDA"                 % "4.2.0_214",
+  "net.dv8tion"            % "JDA"                 % "5.0.0-alpha.11",
   "com.github.pureconfig" %% "pureconfig-core"     % "0.17.1",
   "org.typelevel"         %% "cats-effect"         % "3.3.11",
   "co.fs2"                %% "fs2-core"            % "3.2.7",

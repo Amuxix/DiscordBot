@@ -3,7 +3,7 @@ package me.amuxix.commands
 import cats.effect.IO
 import me.amuxix.{AnyCommand, Bot, Persistence}
 import me.amuxix.syntax.all.*
-import me.amuxix.wrappers.MessageEvent
+import me.amuxix.wrappers.event.MessageEvent
 
 import scala.util.Try
 import scala.util.matching.Regex
@@ -17,14 +17,14 @@ object CopyAllowedCommands extends TextCommand:
         Try(id.toLong).toOption
           .fold(event.jda.getChannelByName(id))(event.jda.getChannelByID)
           .flatMap {
-            case None => event.sendMessage(s"Could not find channel with provided name or ID.")
+            case None => event.reply(s"Could not find channel with provided name or ID.")
             case Some(channel) =>
               for
                 _ <- Bot.enabledCommands.update { enabledCommands =>
                   val option = enabledCommands.get(channel.id)
                   enabledCommands + option.fold(event.channel.id -> Set.empty[AnyCommand])(event.channel.id -> _)
                 }
-                _ <- event.sendMessage(s"Copy successful.")
+                _ <- event.reply(s"Copy successful.")
                 _ <- Persistence.saveEnabledCommands
               yield ()
           }

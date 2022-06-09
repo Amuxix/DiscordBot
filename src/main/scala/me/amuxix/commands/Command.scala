@@ -1,9 +1,13 @@
 package me.amuxix.commands
 
 import cats.effect.IO
-import me.amuxix.secrethitler.commands.SecretHitlerCommand
+import me.amuxix.commands.slash.SlashPattern
+import me.amuxix.wrappers.event.{Event, GenericTextEvent, MessageEvent, ReactionEvent, SlashCommandEvent}
 import me.amuxix.{Bot, Named}
-import me.amuxix.wrappers.{Event, MessageEvent, ReactionEvent}
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
+//import net.dv8tion.jda.api.interactions.commands.Command as JDACommand
+import net.dv8tion.jda.api.interactions.commands.build.{CommandData, Commands}
+import net.dv8tion.jda.api.utils.data.DataObject
 
 import scala.util.matching.Regex
 
@@ -25,8 +29,7 @@ sealed abstract class Command[T, E <: Event] extends Named:
       allowed = event.authorMember.fold(false) { member =>
         member.isGuildOwner ||
         (roles & member.roles.map(_.id)).nonEmpty ||
-        member.id == 211184778815340544L ||
-        this.isInstanceOf[SecretHitlerCommand]
+        member.id == 211184778815340544L
       }
       stop <- if allowed || alwaysAllowed then apply(pattern, event) else IO.pure(false)
     yield stop
@@ -37,6 +40,19 @@ sealed abstract class Command[T, E <: Event] extends Named:
 
 abstract class TextCommand extends Command[Regex, MessageEvent]:
   override def matches(event: MessageEvent): Boolean = pattern.matches(event.content)
+
+abstract class SlashCommand extends Command[SlashPattern, SlashCommandEvent]:
+  def command: String
+
+  override lazy val pattern: SlashPattern = SlashPattern(command, description)
+
+  override def matches(event: SlashCommandEvent): Boolean = command.equalsIgnoreCase(event.name)
+
+trait Options:
+  this: SlashCommand =>
+  def options: List[SlashPattern => SlashPattern]
+
+  override lazy val pattern: SlashPattern = options.foldLeft(SlashPattern(command, description))((command, option) => option(command))
 
 abstract class ReactionCommand extends Command[String, ReactionEvent]:
   override def matches(event: ReactionEvent): Boolean = pattern == event.content

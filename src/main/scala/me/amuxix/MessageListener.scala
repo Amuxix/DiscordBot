@@ -1,19 +1,23 @@
 package me.amuxix
 
 import cats.effect.IO
-import me.amuxix.commands.{Command, ReactionCommand, StopSpam, TextCommand}
-import me.amuxix.secrethitler.commands.{Discard, PickFascist, PickLiberal}
-import me.amuxix.wrappers.MessageEvent.*
-import me.amuxix.wrappers.ReactionEvent.*
-import me.amuxix.wrappers.{Event, MessageEvent, ReactionEvent}
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
-import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
-import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent
-import net.dv8tion.jda.api.events.message.priv.react.PrivateMessageReactionAddEvent
+import me.amuxix.commands.{Command, ReactionCommand, SlashCommand, StopSpam, TextCommand}
+import me.amuxix.wrappers.event.ReactionEvent.*
+import me.amuxix.wrappers.event.ReactionEvent.given
+import me.amuxix.wrappers.event.MessageEvent.*
+import me.amuxix.wrappers.event.MessageEvent.given
+import me.amuxix.wrappers.event.SlashCommandEvent.*
+import me.amuxix.wrappers.event.SlashCommandEvent.given
+import me.amuxix.wrappers.event.Event
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import cats.effect.unsafe.implicits.global
+import me.amuxix.wrappers.event.{Event, MessageEvent, ReactionEvent, SlashCommandEvent}
 
-object MessageListener extends ListenerAdapter { out =>
+object MessageListener extends ListenerAdapter:
+  out =>
 
   private def runCommandList[T, E <: Event](
     event: E,
@@ -46,20 +50,29 @@ object MessageListener extends ListenerAdapter { out =>
     commands: List[TextCommand],
     privateChannel: Boolean,
   ): IO[Unit] =
-    runCommandList(event, commands, privateChannel) { case (event, command) =>
+    runCommandList(event, commands, privateChannel) { (event, command) =>
       lazy val subgroups = command.pattern.findFirstMatchIn(event.content).get.subgroups.mkString(" ")
       if command.pattern != Command.all then
-        IO(println(s"${event.author} issued text command $command $subgroups".trim))
+        IO.println(s"${event.author} issued text command $command $subgroups".trim)
       else
         IO.unit
     }
 
-  def runReactionCommandList(event: ReactionEvent, commands: List[ReactionCommand], privateChannel: Boolean): IO[Unit] =
-    runCommandList(event, commands, privateChannel) { case (event, command) =>
-      IO(println(s"${event.author} issued reaction command $command".trim))
+  private def runReactionCommandList(event: ReactionEvent, commands: List[ReactionCommand], privateChannel: Boolean): IO[Unit] =
+    runCommandList(event, commands, privateChannel) { (event, command) =>
+      IO.println(s"${event.author} issued reaction command $command".trim)
     }
 
-  override def onGuildMessageReceived(event: GuildMessageReceivedEvent): Unit =
+  private def runSlashCommandList(
+    event: SlashCommandEvent,
+    commands: List[SlashCommand],
+    privateChannel: Boolean,
+  ): IO[Unit] =
+    runCommandList(event, commands, privateChannel) { (event, command) =>
+      IO.println(s"${event.author} issued slash command $command".trim)
+    }
+
+  override def onMessageReceived(event: MessageReceivedEvent): Unit =
     (for
       commands <- Bot.enabledCommands(event.channel)
       textCommands = commands.collect { case command: TextCommand =>
@@ -68,10 +81,7 @@ object MessageListener extends ListenerAdapter { out =>
       _ <- runTextCommandList(event, textCommands, privateChannel = false)
     yield ()).unsafeRunSync()
 
-  override def onPrivateMessageReceived(event: PrivateMessageReceivedEvent): Unit =
-    runTextCommandList(event, List(Discard, StopSpam), privateChannel = true).unsafeRunSync()
-
-  override def onGuildMessageReactionAdd(event: GuildMessageReactionAddEvent): Unit =
+  override def onMessageReactionAdd(event: MessageReactionAddEvent): Unit =
     (for
       commands <- Bot.enabledCommands(event.channel)
       reactionCommands = commands.collect { case command: ReactionCommand =>
@@ -80,6 +90,11 @@ object MessageListener extends ListenerAdapter { out =>
       _ <- runReactionCommandList(event, reactionCommands, privateChannel = false)
     yield ()).unsafeRunSync()
 
-  override def onPrivateMessageReactionAdd(event: PrivateMessageReactionAddEvent): Unit =
-    runReactionCommandList(event, List(PickFascist, PickLiberal), privateChannel = true).unsafeRunSync()
-}
+  override def onSlashCommandInteraction(event: SlashCommandInteractionEvent): Unit =
+    (for
+      commands <- Bot.enabledCommands(event.channel)
+      reactionCommands = commands.collect { case command: SlashCommand =>
+        command
+      }
+      _ <- runSlashCommandList(event, reactionCommands, privateChannel = false)
+    yield ()).unsafeRunSync()

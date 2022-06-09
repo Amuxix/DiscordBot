@@ -2,8 +2,8 @@ package me.amuxix.commands
 
 import cats.effect.IO
 import me.amuxix.Bot
-import me.amuxix.wrappers.MessageEvent
 import me.amuxix.syntax.all.*
+import me.amuxix.wrappers.event.MessageEvent
 
 import scala.util.matching.Regex
 
@@ -17,7 +17,7 @@ object TakeOver extends TextCommand:
         case Some((id, _)) if id != event.author.id =>
           event.jda.setWatching(event.authorName)
           event
-            .sendMessage(s"${event.authorName} taken over mute following.")
+            .reply(s"${event.authorName} taken over mute following.")
             .as(event.author.isSelfMuted.map(event.author.id -> _))
         case o => IO.pure(o)
       _ <- Bot.muteLeader.set(update)

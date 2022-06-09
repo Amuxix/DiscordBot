@@ -2,9 +2,9 @@ package me.amuxix.commands
 
 import cats.effect.IO
 import cats.syntax.foldable.*
-import me.amuxix.wrappers.MessageEvent
 import me.amuxix.syntax.all.*
 import me.amuxix.Bot.userMap
+import me.amuxix.wrappers.event.MessageEvent
 
 import scala.util.matching.Regex
 

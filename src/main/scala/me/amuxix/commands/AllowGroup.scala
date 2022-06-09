@@ -4,7 +4,7 @@ import cats.effect.IO
 import me.amuxix.{Bot, Persistence}
 import me.amuxix.Bot.roleMap
 import me.amuxix.syntax.all.*
-import me.amuxix.wrappers.MessageEvent
+import me.amuxix.wrappers.event.MessageEvent
 
 import scala.util.matching.Regex
 
@@ -19,7 +19,7 @@ object AllowGroup extends TextCommand:
           case Some(role) =>
             for
               _ <- Bot.allowedRoles.update(_ + role.id)
-              _ <- event.sendMessage(s"Users of ${role.name} can now use this bot.")
+              _ <- event.reply(s"Users of ${role.name} can now use this bot.")
               _ <- Persistence.saveAllowedRoles
             yield true
         }

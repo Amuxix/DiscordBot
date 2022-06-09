@@ -1,10 +1,11 @@
-package me.amuxix.wrappers
-
-import java.io.File
+package me.amuxix.wrappers.event
 
 import cats.effect.IO
+import me.amuxix.wrappers.*
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.{MessageChannel, Member as JDAMember, User as JDAUser, Guild as JDAGuild}
+import net.dv8tion.jda.api.entities.{MessageChannel, Guild as JDAGuild, Member as JDAMember, User as JDAUser}
+
+import java.io.File
 
 abstract class Event(
   jdaChannel: MessageChannel,
@@ -19,8 +20,6 @@ abstract class Event(
   lazy val guild: Option[Guild] = jdaGuild.map(new Guild(_))
   lazy val jda: JDA = jdaAuthor.getJDA
 
-  def sendMessage(string: String): IO[Message] = channel.sendMessage(string)
+  def reply(string: String): IO[Unit] = channel.sendMessage(string).void
 
   def sendFile(file: File): IO[Message] = channel.sendFile(file)
-
-  def content: String

@@ -1,8 +1,8 @@
 package me.amuxix.commands
 
 import cats.effect.IO
+import me.amuxix.wrappers.event.MessageEvent
 import me.amuxix.{Bot, Persistence}
-import me.amuxix.wrappers.MessageEvent
 
 import scala.util.matching.Regex
 
@@ -14,7 +14,7 @@ object EnableAllCommands extends TextCommand:
       _ <- Bot.enabledCommands.update { enabledCommandsMap =>
         enabledCommandsMap + (event.channel.id -> Bot.allCommands.toList.toSet)
       }
-      _ <- event.sendMessage(s"Enabled all commands.")
+      _ <- event.reply(s"Enabled all commands.")
       _ <- Persistence.saveEnabledCommands
     yield true
 
