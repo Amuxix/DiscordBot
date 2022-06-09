@@ -4,22 +4,24 @@ import cats.effect.IO
 import me.amuxix.Bot
 import me.amuxix.syntax.all.*
 import me.amuxix.Bot.userMap
-import me.amuxix.wrappers.event.MessageEvent
+import me.amuxix.commands.slash.SlashPattern
+import me.amuxix.wrappers.User
+import me.amuxix.wrappers.event.{MessageEvent, SlashCommandEvent}
 
 import scala.util.matching.Regex
 
-object Spam extends TextCommand:
-  override def pattern: Regex = s"^[Ss]pam ${Command.userID}$$".r
+object Spam extends SlashCommand with Options:
+  override def command: String = "spam"
 
-  override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
-    event.content match
-      case regex(id) =>
-        event.jda.getUserByID(id.toLong).flatMap {
-          case user if !user.isBot =>
-            Bot.spamList.update(_ + user.id).as(true)
-          case _ =>
-            IO.pure(false)
-        }
-      case _ => IO.pure(false)
+  override def options: List[SlashPattern => SlashPattern] = List(
+    _.addOption[User]("user", "User to toggle the mute")
+  )
+
+  override protected def apply(pattern: SlashPattern, event: SlashCommandEvent): IO[Boolean] =
+    val user = event.getOption[User]("user")
+    if !user.isBot then
+      event.reply(s"Muting ${user.name}") *> Bot.spamList.update(_ + user.id).as(true)
+    else
+      event.reply(s"Can't spam bots").as(false)
 
   override val description: String = "Spams the mentioned person until a response from the spam pms is given."

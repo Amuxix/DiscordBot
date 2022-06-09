@@ -25,30 +25,28 @@ object Bot extends IOApp:
 
   val allCommands: NonEmptyList[AnyCommand] = NonEmptyList.of(
     Help,
-    /*EnableCommand,
-    DisableCommand,
-    EnableAllCommands,
-    DisableAllCommands,
     FollowMute,
     TakeOver,
     Mute,
-    Spam,
-    StopSpam,
-    AllowGroup,
-    CopyAllowedCommands,
-    DisallowGroup,*/
+    //Spam,
+    //StopSpam,
     Test,
   )
+
+  lazy val textCommands: List[TextCommand] = allCommands.collect {
+    case command: TextCommand => command
+  }
+  lazy val reactionCommands: List[ReactionCommand] = allCommands.collect {
+    case command: ReactionCommand => command
+  }
+  lazy val slashCommands: List[SlashCommand] = allCommands.collect {
+    case command: SlashCommand => command
+  }
 
   val alwaysEnabled: NonEmptyList[AnyCommand] =
     NonEmptyList.of(
       Help,
-      EnableCommand,
-      DisableCommand,
-      EnableAllCommands,
-      DisableAllCommands,
       StopSpam,
-      ListEnabledCommands,
       Test,
     )
 
