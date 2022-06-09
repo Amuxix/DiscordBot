@@ -30,7 +30,6 @@ object Bot extends IOApp:
     Mute,
     //Spam,
     //StopSpam,
-    Test,
   )
 
   lazy val textCommands: List[TextCommand] = allCommands.collect {
