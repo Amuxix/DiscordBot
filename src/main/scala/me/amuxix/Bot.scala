@@ -46,7 +46,6 @@ object Bot extends IOApp:
     NonEmptyList.of(
       Help,
       StopSpam,
-      Test,
     )
 
   val enabledCommands = Ref.unsafe[IO, Map[Long, Set[AnyCommand]]](Map.empty)
