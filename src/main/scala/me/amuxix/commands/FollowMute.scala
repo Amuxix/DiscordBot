@@ -2,15 +2,16 @@ package me.amuxix.commands
 
 import cats.effect.IO
 import me.amuxix.Bot.{muteLeader, userMap}
+import me.amuxix.commands.slash.SlashPattern
 import me.amuxix.syntax.all.*
-import me.amuxix.wrappers.event.MessageEvent
+import me.amuxix.wrappers.event.{MessageEvent, SlashCommandEvent}
 
 import scala.util.matching.Regex
 
-object FollowMute extends TextCommand:
-  override def pattern: Regex = "^(?:un)?follow mute$".r
+object FollowMute extends SlashCommand:
+  override def command: String = "follow_mute"
 
-  override protected def apply(regex: Regex, event: MessageEvent): IO[Boolean] =
+  override protected def apply(pattern: SlashPattern, event: SlashCommandEvent): IO[Boolean] =
     for
       leader <- muteLeader.get
       update <- leader match

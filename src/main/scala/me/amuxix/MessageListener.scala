@@ -73,28 +73,10 @@ object MessageListener extends ListenerAdapter:
     }
 
   override def onMessageReceived(event: MessageReceivedEvent): Unit =
-    (for
-      commands <- Bot.enabledCommands(event.channel)
-      textCommands = commands.collect { case command: TextCommand =>
-        command
-      }
-      _ <- runTextCommandList(event, textCommands, privateChannel = false)
-    yield ()).unsafeRunSync()
+    runTextCommandList(event, Bot.textCommands, privateChannel = false).unsafeRunSync()
 
   override def onMessageReactionAdd(event: MessageReactionAddEvent): Unit =
-    (for
-      commands <- Bot.enabledCommands(event.channel)
-      reactionCommands = commands.collect { case command: ReactionCommand =>
-        command
-      }
-      _ <- runReactionCommandList(event, reactionCommands, privateChannel = false)
-    yield ()).unsafeRunSync()
+    runReactionCommandList(event, Bot.reactionCommands, privateChannel = false).unsafeRunSync()
 
   override def onSlashCommandInteraction(event: SlashCommandInteractionEvent): Unit =
-    (for
-      commands <- Bot.enabledCommands(event.channel)
-      reactionCommands = commands.collect { case command: SlashCommand =>
-        command
-      }
-      _ <- runSlashCommandList(event, reactionCommands, privateChannel = false)
-    yield ()).unsafeRunSync()
+    runSlashCommandList(event, Bot.slashCommands, privateChannel = false).unsafeRunSync()
