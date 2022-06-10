@@ -52,10 +52,6 @@ libraryDependencies ++= Seq(
   "io.circe"              %% "circe-parser"        % circeVersion,
 )
 
-Universal / javaOptions ++= Seq(
-  "-Dconfig.file=/data/conf/application.conf",
-)
-
 Docker / dockerRepository := Some("amuxix")
 
 dockerUpdateLatest := true
